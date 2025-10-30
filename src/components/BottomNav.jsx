@@ -1,5 +1,5 @@
 import React from "react";
-import { bottomNavData } from "../data/BottomNavData";
+import { bottomNavData } from "../data/bottomNavData";
 import { useNavigate } from "react-router-dom"; // 👈 import navigation hook
 
 const BottomNav = () => {

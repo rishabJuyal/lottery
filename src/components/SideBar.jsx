@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { X, ArrowRight, ChevronUp, ChevronDown } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { sidebarLinks } from "../data/sidebarLinksData";
-import { bottomNavData } from "../data/BottomNavData";
+import { bottomNavData } from "../data/bottomNavData";
 
 const Sidebar = ({ isOpen, onClose }) => {
     const [aboutOpen, setAboutOpen] = useState(false);
