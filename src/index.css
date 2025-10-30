@@ -1,0 +1,27 @@
+@import "tailwindcss";
+
+:root {
+  /* Backgrounds */
+  --bg-primary: #ffffff;        /* main page background */
+  --bg-secondary: #f5f5f5;      /* gray-100 equivalent for cards, sections */
+
+  /* Primary colors */
+  --color-primary: #32528f;     /* blue-900, for main buttons, headings */
+  --color-primary-light: #002776; /* blue-800, for hover states, highlights */
+  --color-primary-dark: #172554;  /* blue-950, for sidebar, dark accents */
+
+  /* Text colors */
+  --text-primary: #232424;      /* main text color */
+  --text-on-primary: #ffffff;   /* text on blue background, like buttons */
+}
+
+[data-theme="dark"] {
+    --bg-primary: #111827;        /* dark main background */
+    --bg-secondary: #1f2937;      /* dark card sections */
+    --color-primary: #60a5fa;     /* lighter blue for dark theme buttons */
+    --color-primary-light: #3b82f6;
+    --color-primary-dark: #1e3a8a;
+    --text-primary: #f3f4f6;      /* light text */
+    --text-on-primary: #1e3a8a;   /* text on blue buttons */
+  }
+  
