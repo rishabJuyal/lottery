@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import Sidebar from "../components/Sidebar";
+import SideBar from "../components/SideBar.jsx";
 import Header from "../components/Header";
 import BottomNav from "../components/BottomNav";
 import { useSelector } from "react-redux";
@@ -17,7 +17,7 @@ export default function Layout() {
   return (
     <>
       {/* Sidebar */}
-      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <SideBar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       {/* Main layout */}
       <div className="flex flex-col min-h-screen">
