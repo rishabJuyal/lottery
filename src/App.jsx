@@ -1,25 +1,26 @@
 import React, { Suspense, lazy } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Layout from "./layouts/Layout";
-import BuyTicketPage from "./components/BuyTicketPopup/BuyTicketPage";
-import DrawGames from "./pages/DrawGames";
-import Profile from "./pages/Profile";
-import ResultPage from "./pages/ResultPage";
-import CheckMyTickets from "./pages/CheckMyTickets";
-import Offers from "./pages/Offers";
-import ClaimPrize from "./pages/ClaimPrize";
-import ResponsibleGambling from "./pages/ResponsibleGambling";
-import RegisterPage from "./pages/Register";
-import Settings from "./pages/Settings";
-import Terms from "./pages/Terms";
-import PrivacyPolicy from "./pages/PrivacyPolicy";
-import ContactUs from "./pages/ContactUs";
 
 // Lazy-loaded pages
 const Home = lazy(() => import("./pages/Home"));
 const About = lazy(() => import("./pages/About"));
 const Contact = lazy(() => import("./pages/ContactUs"));
-const Login = lazy(() => import("./pages/Login")); // not inside Layout
+const BuyTicketPage = lazy(() => import("./components/BuyTicketPopup/BuyTicketPage"));
+const DrawGames = lazy(() => import("./pages/DrawGames"));
+const Profile = lazy(() => import("./pages/Profile"));
+const CheckMyTickets = lazy(() => import("./pages/CheckMyTickets"));
+const Offers = lazy(() => import("./pages/Offers"));
+const ClaimPrize = lazy(() => import("./pages/ClaimPrize"));
+const ResponsibleGambling = lazy(() => import("./pages/ResponsibleGambling"));
+const RegisterPage = lazy(() => import("./pages/Register"));
+const Settings = lazy(() => import("./pages/Settings"));
+const Terms = lazy(() => import("./pages/Terms"));
+const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
+const ContactUs = lazy(() => import("./pages/ContactUs"));
+
+const Login = lazy(() => import("./pages/Login")); 
+const ResultPage = lazy(() => import("./pages/ResultPage"));
 
 function App() {
   return (
@@ -55,7 +56,6 @@ function App() {
             <Route path="/terms-and-conditions" element={<Terms />} />
             <Route path="/privacy-statement" element={<PrivacyPolicy />} />
             <Route path="/contact-us" element={<ContactUs />} />
-
 
           {/* Optional 404 fallback */}
           <Route

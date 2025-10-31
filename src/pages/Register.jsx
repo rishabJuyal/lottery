@@ -45,7 +45,7 @@ const RegisterPage = () => {
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 w-5 h-5" />
             <input
               type="password"
-              placeholder="Enter Password"
+              placeholder="Create Password"
               className="bg-white w-full rounded-full border-2 border-gray-300 pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder-gray-400"
             />
           </div>
