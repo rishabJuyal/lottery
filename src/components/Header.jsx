@@ -10,7 +10,7 @@ const Header = ({ onToggleSidebar }) => (
 
     {/* Title as Link */}
     <Link to="/" className="text-xl font-bold hover:underline hover:text-gray-200 transition">
-      Texas Lottery
+      Dear Lottery
     </Link>
 
     {/* Login Link */}

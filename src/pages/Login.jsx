@@ -1,13 +1,13 @@
 import { Lock, User } from "lucide-react";
 import React from "react";
-import { useNavigate } from "react-router-dom"; // 👈 for navigation
+import { useNavigate } from "react-router-dom";
 
 const LoginPage = () => {
-  const navigate = useNavigate(); // hook for programmatic navigation
+  const navigate = useNavigate();
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[var(--color-primary-light)] relative px-7">
-      {/* Close button (absolutely positioned at top-right) */}
+      {/* Close button */}
       <button
         onClick={() => navigate("/")}
         className="absolute top-3 right-3 text-white text-[50px] font-light leading-none hover:text-gray-300 transition"
@@ -66,7 +66,12 @@ const LoginPage = () => {
           <p className="text-[13px] font-semibold mb-2">
             Haven’t Registered Yet?
           </p>
-          <button className="bg-white w-full text-[#002C77] px-10 py-1.5 rounded-full font-bold text-sm hover:bg-gray-100 transition">
+
+          {/* 👇 Navigate to Register Page */}
+          <button
+            onClick={() => navigate("/register")}
+            className="bg-white w-full text-[#002C77] px-10 py-1.5 rounded-full font-bold text-sm hover:bg-gray-100 transition"
+          >
             REGISTER
           </button>
         </div>

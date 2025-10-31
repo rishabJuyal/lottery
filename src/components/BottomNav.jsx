@@ -6,7 +6,7 @@ const BottomNav = () => {
   const navigate = useNavigate();
 
   return (
-    <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-300 flex justify-around p-2 text-blue-900 gap-5 z-30">
+    <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-300 flex justify-around p-1 text-blue-900 gap-5 z-30">
       {bottomNavData
         .filter((btn) => btn.label !== "RETAILER LOCATOR") // exclude specific items
         .map((btn, index) => {

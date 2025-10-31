@@ -25,7 +25,7 @@ export default function Layout() {
         <Header onToggleSidebar={() => setSidebarOpen((open) => !open)} />
 
         {/* ✅ Use <Outlet /> instead of children */}
-        <main className="flex-1 bg-gray-100 mb-20 mt-13">
+        <main className="flex-1 bg-gray-100 mb-18 mt-13">
           <Outlet />
         </main>
 
