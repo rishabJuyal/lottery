@@ -10,7 +10,7 @@ const LotteryTicket = ({
   price = "500",
   prizeValue = "1,00,000",
   drawDate = "18-09-2025",
-  drawTime = "05:00 PM ONWARDS",
+  drawTime = "05:00 PM",
   drawDay = "THURSDAY",
   won = false,
   loss = false,
@@ -113,7 +113,7 @@ const LotteryTicket = ({
 
           <div className="relative flex flex-col items-end w-full -mb-3">
             <div className="text-[10px] font-bold text-gray-700 leading-tight">
-              {drawTime}
+              {drawTime} {canPurchase? 'ONWARDS': ""}
             </div>
             <div className="text-[11px] font-bold text-purple-800 leading-tight">
               {drawDay}

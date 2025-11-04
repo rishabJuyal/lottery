@@ -1,24 +1,50 @@
 import React from "react";
 import { bottomNavData } from "../data/bottomNavData";
-import { useNavigate } from "react-router-dom"; // 👈 import navigation hook
+import { useNavigate, useLocation } from "react-router-dom";
 
 const BottomNav = () => {
   const navigate = useNavigate();
+  const location = useLocation();
 
   return (
-    <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-300 flex justify-around p-1 text-blue-900 gap-5 z-30">
+    <footer
+      className="fixed bottom-0 left-0 right-0 flex justify-around p-1 gap-5 z-30 border-t border-[var(--color-primary-dark)]"
+      style={{
+        background: "linear-gradient(to bottom, #a20604, #e63820)", // 🔥 red gradient
+        color: "white",
+      }}
+    >
       {bottomNavData
-        .filter((btn) => btn.label !== "RETAILER LOCATOR") // exclude specific items
+        .filter((btn) => btn.label !== "RETAILER LOCATOR") // optional exclusion
         .map((btn, index) => {
           const Icon = btn.icon;
+          const isActive = location.pathname === btn.path;
+
           return (
             <button
               key={index}
-              onClick={() => navigate(btn.path)} // 👈 navigate on click
-              className="flex flex-col w-20 items-center hover:text-blue-600 transition-colors"
+              onClick={() => navigate(btn.path)}
+              className={`flex flex-col w-20 items-center transition-all duration-200 leading-3 
+                ${isActive ? "scale-110" : "opacity-80 hover:opacity-100"}
+              `}
             >
-              <Icon size={32} />
-              <span className="mt-1 text-[10px] font-semibold">{btn.label}</span>
+              <div
+                className={`p-1 rounded-full my-1 transition-all duration-200 ${
+                  isActive
+                    ? " shadow-lg"
+                    : "bg-transparent text-white"
+                }`}
+              >
+                <Icon size={26} />
+              </div>
+
+              <span
+                className={`text-[10px] font-semibold tracking-wide uppercase ${
+                  isActive ? "text-white" : "text-gray-200"
+                }`}
+              >
+                {btn.label}
+              </span>
             </button>
           );
         })}

@@ -54,7 +54,7 @@ const Home = () => {
     price: ticket.price,
     prizeValue: ticket.prizeValue,
     drawDate: today,
-    drawTime: `${nearestTime} ONWARDS`,
+    drawTime: nearestTime,
     drawDay: new Date(today)
       .toLocaleDateString("en-US", { weekday: "long" })
       .toUpperCase(),

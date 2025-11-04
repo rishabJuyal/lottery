@@ -2,142 +2,143 @@ import React, { useState, useEffect } from "react";
 import LotteryTicket from "./LotteryTicket";
 
 const BuyTicketModal = ({ isOpen, onClose, price, ticket, purchasedTickets = [] }) => {
-  if (!isOpen || !ticket) return null;
+    const [quantity, setQuantity] = useState(25);
+    const [tickets, setTickets] = useState([]);
+    const [animateIn, setAnimateIn] = useState(false);
 
-  const [purchaseType, setPurchaseType] = useState("single"); // "single" | "lot"
-  const [selectedLot, setSelectedLot] = useState(1);
-  const [tickets, setTickets] = useState([]);
-
-  // 🎟️ Generate tickets dynamically when in "lot" mode
-  useEffect(() => {
-    if (purchaseType === "lot" && ticket) {
-      const totalTickets = selectedLot * 25;
-      let startId = parseInt(ticket.id);
-
-      const generated = [];
-      let count = 0;
-
-      // generate tickets while skipping purchased ones
-      while (generated.length < totalTickets) {
-        if (!purchasedTickets.includes(startId.toString())) {
-          generated.push({ ...ticket, id: startId.toString() });
+    useEffect(() => {
+        if (isOpen) {
+            setAnimateIn(true);
+        } else {
+            setAnimateIn(false);
         }
-        startId++;
-        count++;
-        if (count > 1000) break; // safety to prevent infinite loop
-      }
+    }, [isOpen]);
 
-      setTickets(generated);
-    } else {
-      setTickets([ticket]);
-    }
-  }, [purchaseType, selectedLot, ticket, purchasedTickets]);
+    useEffect(() => {
+        if (ticket) {
+            let startId = parseInt(ticket.id);
+            const generated = [];
+            let count = 0;
 
-  const handleConfirm = () => {
-    const totalTickets = purchaseType === "lot" ? tickets.length : 1;
-    const totalPrice = totalTickets * parseInt(price);
+            while (generated.length < quantity) {
+                if (!purchasedTickets.includes(startId.toString())) {
+                    generated.push({ ...ticket, id: startId.toString() });
+                }
+                startId++;
+                count++;
+                if (count > 2000) break; // safety cap
+            }
 
-    alert(
-      `✅ Purchased ${totalTickets} ticket${totalTickets > 1 ? "s" : ""} — Total ₹${totalPrice}`
-    );
-    onClose();
-  };
+            setTickets(generated);
+        }
+    }, [quantity, ticket, purchasedTickets]);
 
-  return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-lg w-[95%] sm:w-[420px] max-h-[90vh] overflow-y-auto p-5 relative">
-        {/* ❌ Close Button */}
-        <button
-          onClick={onClose}
-          className="absolute top-3 right-3 text-gray-500 hover:text-red-500 text-lg"
+    const handleConfirm = () => {
+        const totalPrice = quantity * parseInt(price);
+        alert(`✅ Purchased ${quantity} tickets — Total ₹${totalPrice}`);
+        onClose();
+    };
+
+    const adjustQuantity = (val) => {
+        const newVal = Math.max(1, quantity + val);
+        setQuantity(newVal);
+    };
+
+    if (!isOpen || !ticket) return null;
+
+    return (
+        <div
+            className={`fixed inset-0 z-50 flex items-end justify-center bg-black/50 backdrop-blur-sm transition-opacity duration-300 ${animateIn ? "opacity-100" : "opacity-0"
+                }`}
+            onClick={onClose} // closes when clicking outside
         >
-          ✖
-        </button>
-
-        {/* 🏷️ Header */}
-        <h2 className="text-xl font-bold text-center text-green-700 mb-4">
-          Buy Ticket — ₹{price}
-        </h2>
-
-        {/* 💳 Purchase Type */}
-        <div className="flex justify-center gap-3 mb-4">
-          <button
-            onClick={() => setPurchaseType("single")}
-            className={`px-3 py-2 rounded-md text-sm font-semibold border ${
-              purchaseType === "single"
-                ? "bg-green-600 text-white border-green-600"
-                : "border-gray-300 hover:bg-green-100"
-            }`}
-          >
-            Single
-          </button>
-          <button
-            onClick={() => setPurchaseType("lot")}
-            className={`px-3 py-2 rounded-md text-sm font-semibold border ${
-              purchaseType === "lot"
-                ? "bg-green-600 text-white border-green-600"
-                : "border-gray-300 hover:bg-green-100"
-            }`}
-          >
-            Buy in Lot
-          </button>
-        </div>
-
-        {/* 🎟️ Ticket Display */}
-        {purchaseType === "single" ? (
-          <div className="flex justify-center mb-6">
-            <LotteryTicket {...ticket} canPurchase={false} loading={false} />
-          </div>
-        ) : (
-          <>
-            {/* Lot Selector */}
-            <div className="mb-4">
-              <p className="text-sm font-semibold mb-2 text-gray-700 text-center">
-                Select Lot (Each Lot = 25 Tickets)
-              </p>
-              <div className="flex flex-wrap justify-center gap-2">
-                {[...Array(10)].map((_, i) => (
-                  <button
-                    key={i + 1}
-                    onClick={() => setSelectedLot(i + 1)}
-                    className={`px-3 py-1.5 text-sm rounded-md font-semibold border ${
-                      selectedLot === i + 1
-                        ? "bg-green-600 text-white border-green-600"
-                        : "border-gray-300 hover:bg-green-100"
+            {/* Modal */}
+            <div
+                className={`bg-orange-50 rounded-t-lg shadow-xl w-full max-w-md transition-transform duration-300 ${animateIn ? "translate-y-0" : "translate-y-full"
                     }`}
-                  >
-                    {i + 1}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Horizontal Ticket Scroll */}
-            <div className="flex overflow-x-auto gap-3 pb-2 px-2 scrollbar-thin scrollbar-thumb-green-400">
-              {tickets.map((t) => (
-                <div key={t.id} className="flex-shrink-0 w-[340px]">
-                  <LotteryTicket {...t} canPurchase={false} loading={false} />
+                style={{ maxHeight: "90vh" }}
+                onClick={(e) => e.stopPropagation()} // prevent closing when clicking inside
+            >
+                {/* 🧭 Header */}
+                <div
+                    style={{ background: "var(--bg-gradient)" }}
+                    className="p-3 text-center rounded-t-lg relative"
+                >
+                    <h2 className="text-[15px] font-extrabold text-white">
+                        BUY TICKETS • ₹{price} EACH
+                    </h2>
+                    <button
+                        onClick={onClose}
+                        className="absolute top-3 right-4 text-white/80 hover:text-red-200 text-lg"
+                    >
+                        ✖
+                    </button>
                 </div>
-              ))}
+
+                {/* 🎟️ Ticket Scroll */}
+                <div className="flex-1 overflow-x-auto flex gap-3 p-4 pb-40 snap-x snap-mandatory scrollbar-thin scrollbar-thumb-gray-400">
+                    {tickets.map((t) => (
+                        <div key={t.id} className="flex-shrink-0 snap-center w-[320px]">
+                            <LotteryTicket {...t} canPurchase={false} loading={false} />
+                        </div>
+                    ))}
+                </div>
+
+                {/* ⚙️ Footer */}
+                {/* ⚙️ Footer */}
+                <div className="absolute bottom-0 left-0 right-0 bg-orange-100 border-t border-gray-200 p-4 py-8  shadow-[0_-3px_10px_rgba(0,0,0,0.08)]">
+                    {/* Quantity + Buy */}
+                    <div className="flex items-center justify-between gap-3 mb-3">
+                        {/* Quantity Box */}
+                        <div className="flex items-center bg-[#fdf7ef] rounded-lg px-3 py-2 w-1/2 border border-gray-300 shadow-inner">
+                            <span className="text-sm font-semibold text-gray-600 mr-2">🎟️</span>
+                            <input
+                                type="number"
+                                min="1"
+                                value={quantity}
+                                onChange={(e) => setQuantity(Number(e.target.value) || 1)}
+                                className="bg-transparent text-gray-800 w-full text-center outline-none text-sm"
+                            />
+                        </div>
+
+                        {/* Buy Button */}
+                        <button
+                            onClick={handleConfirm}
+                            className="w-1/2 bg-gradient-to-b from-[#ffed33] to-[#f46d04] text-[#3b2300] font-bold py-2 rounded-lg shadow-md border border-yellow-300 active:scale-95 transition-transform"
+                        >
+                            BUY ₹{quantity * parseInt(price)}
+                        </button>
+                    </div>
+
+                    {/* Quick Select Buttons */}
+                    <div className="flex justify-between text-xs text-gray-600 font-medium">
+                        {[
+                            { label: "Min", value: 1 },
+                            { label: "+25", value: 25 },
+                            { label: "+50", value: 50 },
+                            { label: "+100", value: 100 },
+                            { label: "Max", value: 500 },
+                        ].map((btn, idx) => (
+                            <button
+                                key={idx}
+                                onClick={() =>
+                                    btn.label === "Min"
+                                        ? setQuantity(1)
+                                        : btn.label === "Max"
+                                            ? setQuantity(500)
+                                            : adjustQuantity(btn.value)
+                                }
+                                className="flex-1 py-1 mx-1 bg-[#fdf7ef] hover:bg-[#f9edd8] border border-gray-300 rounded-md transition"
+                            >
+                                {btn.label}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
             </div>
-          </>
-        )}
-
-        {/* 💰 Total */}
-        <div className="mt-6 text-right font-bold text-gray-800">
-          Total: ₹{purchaseType === "single" ? price : tickets.length * parseInt(price)}
         </div>
-
-        {/* ✅ Confirm Button */}
-        <button
-          onClick={handleConfirm}
-          className="w-full mt-3 py-2 rounded-md font-semibold text-white bg-green-600 hover:bg-green-700"
-        >
-          Confirm Purchase
-        </button>
-      </div>
-    </div>
-  );
+    );
 };
 
 export default BuyTicketModal;

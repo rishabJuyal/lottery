@@ -71,19 +71,23 @@ const ResultPage = () => {
             ) || [];
 
     return (
-        <div className="bg-gray-100 py-4 min-h-screen">
+        <div
+        className="pb-4 min-h-[calc(100vh-120px)] bg-orange-100"
+      >
             {/* Price Tabs + Date Selector (in one line) */}
             {/* Tabs & Date Selector */}
-            <div className="flex items-center justify-between px-1 mb-4">
+            <div         
+            style={{ background: "var(--bg-gradient)" }} 
+            className="flex items-center justify-between px-1 py-2 mb-4">
                 {/* Price Tabs */}
                 <div className="flex gap-2 scrollbar-hide">
                     {prices.map((price) => (
                         <button
                             key={price}
                             onClick={() => setActivePrice(price)}
-                            className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-200 ${activePrice === price
-                                    ? "bg-green-600 text-white shadow-md scale-105"
-                                    : "bg-white text-gray-700 border border-gray-300 hover:bg-green-50"
+                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all duration-200 ${activePrice === price
+                                    ? "bg-orange-400 text-white shadow-md scale-105"
+                                    : "bg-white text-gray-700 border border-yellow-300 hover:bg-green-50"
                                 }`}
                         >
                             ₹{price}
@@ -105,7 +109,7 @@ const ResultPage = () => {
                             setSelectedDate(`${day}/${month}/${year}`);
                         }}
                         max={new Date().toISOString().split("T")[0]} // prevent future dates
-                        className="w-26 text-xs font-medium border border-gray-300 rounded-full px-2 py-1.5 bg-white shadow-sm focus:outline-none focus:ring-1 focus:ring-green-500 appearance-none"
+                        className="w-26 text-xs rounded-lg font-medium border border-yellow-600 px-2 py-1.5 bg-white shadow-sm focus:outline-none focus:ring-1 focus:ring-orange-500 appearance-none"
                     />
                 </div>
 

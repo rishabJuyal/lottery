@@ -34,8 +34,8 @@ const BuyTicketPage = () => {
     }
   }, [location.state]);
 
-  // 🎯 fixed time options
-  const drawTimes = ["11 AM", "1 PM", "3 PM", "5 PM"];
+  // 🎯 fixed time options (with minutes)
+  const drawTimes = ["11:05 AM", "12:15 PM", "1 PM", "3 PM", "5 PM"];
 
   // 🧾 states
   const [selectedDate, setSelectedDate] = useState("");
@@ -52,14 +52,25 @@ const BuyTicketPage = () => {
   const getDayName = (date) =>
     new Date(date).toLocaleDateString("en-US", { weekday: "long" }).toUpperCase();
 
+  // 🧩 helper: convert "12:45 PM" → 24-hour minutes (e.g. 765)
+  const parseTimeToMinutes = (timeStr) => {
+    const [time, modifier] = timeStr.split(" ");
+    let [hours, minutes] = time.split(":").map(Number);
+
+    if (isNaN(minutes)) minutes = 0;
+
+    if (modifier === "PM" && hours !== 12) hours += 12;
+    if (modifier === "AM" && hours === 12) hours = 0;
+
+    return hours * 60 + minutes;
+  };
+
   // 🧭 detect available time slots based on current time
   const getAvailableTimes = () => {
     const now = new Date();
-    const currentHour = now.getHours();
-    return drawTimes.filter((time) => {
-      const hour = parseInt(time);
-      return hour > currentHour; // only future times
-    });
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+    return drawTimes.filter((time) => parseTimeToMinutes(time) > currentMinutes);
   };
 
   // 🕐 init default date/time
@@ -103,7 +114,7 @@ const BuyTicketPage = () => {
         price,
         prizeValue,
         drawDate: drawDateFormatted,
-        drawTime: `${selectedTime} ONWARDS`,
+        drawTime: selectedTime,
         drawDay,
       }));
 
@@ -154,13 +165,16 @@ const BuyTicketPage = () => {
           <label className="block font-semibold text-gray-700 mb-1">
             Select Draw Time:
           </label>
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3">
             {drawTimes.map((time) => {
               const now = new Date();
               const isToday =
                 selectedDate === new Date().toISOString().split("T")[0];
-              const hour = parseInt(time);
-              const isPast = isToday && hour <= now.getHours();
+
+              const currentMinutes = now.getHours() * 60 + now.getMinutes();
+              const drawMinutes = parseTimeToMinutes(time);
+              const isPast = isToday && drawMinutes <= currentMinutes;
+
               return (
                 <button
                   key={time}
