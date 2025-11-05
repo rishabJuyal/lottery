@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 
 const Profile = () => {
   const user = {
@@ -7,13 +8,13 @@ const Profile = () => {
     phone: "+1 234 567 890",
     balance: 1250.0,
   };
-
-  const handleAddMoney = () => alert("Add Money clicked!");
-  const handleWithdraw = () => alert("Withdraw clicked!");
+  const navigate = useNavigate();
+  const handleAddMoney = () => navigate('/add-money');
+  const handleWithdraw = () => navigate('/withdraw');
 
   return (
     <div
-      className="min-h-[calc(100vh-100px)] flex items-center justify-center p-4"
+      className="min-h-[calc(100vh-124px)] flex items-center justify-center p-4"
     //   style={{
     //     background: "linear-gradient(to bottom, #ffed33 0%, #f9a664 20%, #f46d04 80%, #a20604 100%)",
     //   }}

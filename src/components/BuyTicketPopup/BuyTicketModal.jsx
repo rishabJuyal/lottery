@@ -1,21 +1,25 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import LotteryTicket from "./LotteryTicket";
 
 const BuyTicketModal = ({ isOpen, onClose, price, ticket, purchasedTickets = [] }) => {
-    const [quantity, setQuantity] = useState(25);
+    const [quantity, setQuantity] = useState(1);
+    const [tempQuantity, setTempQuantity] = useState(1);
     const [tickets, setTickets] = useState([]);
     const [animateIn, setAnimateIn] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const debounceRef = useRef(null);
 
     useEffect(() => {
-        if (isOpen) {
-            setAnimateIn(true);
-        } else {
-            setAnimateIn(false);
-        }
+        setAnimateIn(isOpen);
     }, [isOpen]);
 
+    // ✅ Generate tickets after 50 ms of no typing
     useEffect(() => {
-        if (ticket) {
+        if (!ticket) return;
+        setLoading(true);
+        clearTimeout(debounceRef.current);
+
+        debounceRef.current = setTimeout(() => {
             let startId = parseInt(ticket.id);
             const generated = [];
             let count = 0;
@@ -30,7 +34,8 @@ const BuyTicketModal = ({ isOpen, onClose, price, ticket, purchasedTickets = [] 
             }
 
             setTickets(generated);
-        }
+            setLoading(false);
+        }, 500); // 🔥 only 50 ms delay
     }, [quantity, ticket, purchasedTickets]);
 
     const handleConfirm = () => {
@@ -40,26 +45,37 @@ const BuyTicketModal = ({ isOpen, onClose, price, ticket, purchasedTickets = [] 
     };
 
     const adjustQuantity = (val) => {
-        const newVal = Math.max(1, quantity + val);
+        const newVal = Math.max(1, Math.min(500, quantity + val));
         setQuantity(newVal);
+        setTempQuantity(newVal);
+    };
+
+    // ✅ Only validate min/max, no ticket update on blur
+    const handleBlur = () => {
+        let valid = parseInt(tempQuantity) || 1;
+        if (valid < 1) valid = 1;
+        if (valid > 500) valid = 500;
+        setTempQuantity(valid);
+        setQuantity(valid);
     };
 
     if (!isOpen || !ticket) return null;
 
     return (
         <div
-            className={`fixed inset-0 z-50 flex items-end justify-center bg-black/50 backdrop-blur-sm transition-opacity duration-300 ${animateIn ? "opacity-100" : "opacity-0"
-                }`}
-            onClick={onClose} // closes when clicking outside
+            className={`fixed inset-0 z-50 flex items-end justify-center bg-black/50 backdrop-blur-sm transition-opacity duration-300 ${
+                animateIn ? "opacity-100" : "opacity-0"
+            }`}
+            onClick={onClose}
         >
-            {/* Modal */}
             <div
-                className={`bg-orange-50 rounded-t-lg shadow-xl w-full max-w-md transition-transform duration-300 ${animateIn ? "translate-y-0" : "translate-y-full"
-                    }`}
+                className={`bg-orange-50 rounded-t-lg shadow-xl w-full max-w-md transition-transform duration-300 ${
+                    animateIn ? "translate-y-0" : "translate-y-full"
+                }`}
                 style={{ maxHeight: "90vh" }}
-                onClick={(e) => e.stopPropagation()} // prevent closing when clicking inside
+                onClick={(e) => e.stopPropagation()}
             >
-                {/* 🧭 Header */}
+                {/* Header */}
                 <div
                     style={{ background: "var(--bg-gradient)" }}
                     className="p-3 text-center rounded-t-lg relative"
@@ -75,42 +91,63 @@ const BuyTicketModal = ({ isOpen, onClose, price, ticket, purchasedTickets = [] 
                     </button>
                 </div>
 
-                {/* 🎟️ Ticket Scroll */}
-                <div className="flex-1 overflow-x-auto flex gap-3 p-4 pb-40 snap-x snap-mandatory scrollbar-thin scrollbar-thumb-gray-400">
-                    {tickets.map((t) => (
-                        <div key={t.id} className="flex-shrink-0 snap-center w-[320px]">
-                            <LotteryTicket {...t} canPurchase={false} loading={false} />
+                {/* Tickets */}
+                <div className="min-h-98 flex-1 overflow-x-auto flex gap-3 p-4 pb-40 snap-x snap-mandatory scrollbar-thin scrollbar-thumb-gray-400">
+                    {loading ? (
+                        <div className="flex w-full justify-center items-center text-gray-600 font-semibold text-sm">
+                            <div className="animate-spin h-5 w-5 border-2 border-orange-500 border-t-transparent rounded-full mr-2" />
+                            Loading tickets...
                         </div>
-                    ))}
+                    ) : (
+                        tickets.map((t) => (
+                            <div key={t.id} className="flex-shrink-0 snap-center w-[320px]">
+                                <LotteryTicket {...t} canPurchase={false} loading={false} />
+                            </div>
+                        ))
+                    )}
                 </div>
 
-                {/* ⚙️ Footer */}
-                {/* ⚙️ Footer */}
-                <div className="absolute bottom-0 left-0 right-0 bg-orange-100 border-t border-gray-200 p-4 py-8  shadow-[0_-3px_10px_rgba(0,0,0,0.08)]">
-                    {/* Quantity + Buy */}
+                {/* Footer */}
+                <div
+                    style={{ background: "var(--bg-gradient)" }}
+                    className="absolute bottom-0 left-0 right-0 border-t border-gray-200 p-4 py-8 shadow-[0_-3px_10px_rgba(0,0,0,0.08)]"
+                >
                     <div className="flex items-center justify-between gap-3 mb-3">
-                        {/* Quantity Box */}
-                        <div className="flex items-center bg-[#fdf7ef] rounded-lg px-3 py-2 w-1/2 border border-gray-300 shadow-inner">
+                        <div className="flex items-center bg-[#fdf7ef] px-3 py-2 w-1/2 border border-gray-300 shadow-inner">
                             <span className="text-sm font-semibold text-gray-600 mr-2">🎟️</span>
                             <input
                                 type="number"
                                 min="1"
-                                value={quantity}
-                                onChange={(e) => setQuantity(Number(e.target.value) || 1)}
+                                max="500"
+                                value={tempQuantity}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    if (val === "" || /^\d+$/.test(val)) {
+                                        const num = val === "" ? "" : Math.min(Number(val), 500);
+                                        setTempQuantity(num);
+                                        if (num !== "") setQuantity(num);
+                                    }
+                                }}
+                                onBlur={handleBlur}
                                 className="bg-transparent text-gray-800 w-full text-center outline-none text-sm"
                             />
                         </div>
 
-                        {/* Buy Button */}
+                        {/* Instant price update */}
                         <button
                             onClick={handleConfirm}
-                            className="w-1/2 bg-gradient-to-b from-[#ffed33] to-[#f46d04] text-[#3b2300] font-bold py-2 rounded-lg shadow-md border border-yellow-300 active:scale-95 transition-transform"
+                            disabled={!tempQuantity}
+                            className={`w-1/2 ${
+                                !tempQuantity
+                                    ? "bg-orange-200 text-gray-700 cursor-not-allowed"
+                                    : "bg-gradient-to-b from-[#ffed33] to-[#f46d04] text-[#3b2300]"
+                            } font-bold py-2 shadow-md border border-yellow-300 active:scale-95 transition-transform`}
                         >
-                            BUY ₹{quantity * parseInt(price)}
+                            BUY ₹{(tempQuantity || 0) * parseInt(price || 0)}
                         </button>
                     </div>
 
-                    {/* Quick Select Buttons */}
+                    {/* Quick Select */}
                     <div className="flex justify-between text-xs text-gray-600 font-medium">
                         {[
                             { label: "Min", value: 1 },
@@ -123,19 +160,18 @@ const BuyTicketModal = ({ isOpen, onClose, price, ticket, purchasedTickets = [] 
                                 key={idx}
                                 onClick={() =>
                                     btn.label === "Min"
-                                        ? setQuantity(1)
+                                        ? (setQuantity(1), setTempQuantity(1))
                                         : btn.label === "Max"
-                                            ? setQuantity(500)
-                                            : adjustQuantity(btn.value)
+                                        ? (setQuantity(500), setTempQuantity(500))
+                                        : adjustQuantity(btn.value)
                                 }
-                                className="flex-1 py-1 mx-1 bg-[#fdf7ef] hover:bg-[#f9edd8] border border-gray-300 rounded-md transition"
+                                className="flex-1 py-1 mx-1 bg-[#fdf7ef] hover:bg-[#f9edd8] border border-gray-300 transition"
                             >
                                 {btn.label}
                             </button>
                         ))}
                     </div>
                 </div>
-
             </div>
         </div>
     );

@@ -6,7 +6,7 @@ const Settings = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="flex items-center justify-center min-h-[calc(100vh-120px)] bg-[var(--color-primary)] relative px-7 py-6">
+    <div className="flex items-center justify-center min-h-[calc(100vh-124px)] bg-[var(--color-primary)] relative px-7 py-6">
       {/* Adjust min-h to subtract header/footer height */}
 
       {/* Change Password Card */}

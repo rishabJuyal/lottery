@@ -72,23 +72,37 @@ const ResultPage = () => {
 
     return (
         <div
-        className="pb-4 min-h-[calc(100vh-120px)] bg-orange-100"
-      >
+            className="pb-4 min-h-[calc(100vh-124px)] bg-orange-100"
+        >
             {/* Price Tabs + Date Selector (in one line) */}
             {/* Tabs & Date Selector */}
-            <div         
-            style={{ background: "var(--bg-gradient)" }} 
-            className="flex items-center justify-between px-1 py-2 mb-4">
+            <div
+                style={{ background: "var(--bg-gradient)" }}
+                className="flex items-center justify-between px-1 py-2 mb-4">
                 {/* Price Tabs */}
                 <div className="flex gap-2 scrollbar-hide">
                     {prices.map((price) => (
                         <button
                             key={price}
                             onClick={() => setActivePrice(price)}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all duration-200 ${activePrice === price
-                                    ? "bg-orange-400 text-white shadow-md scale-105"
-                                    : "bg-white text-gray-700 border border-yellow-300 hover:bg-green-50"
+                            className={`px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition-all duration-200 border 
+  ${activePrice === price
+                                    ? "text-red-700 border-orange-200 shadow-inner"
+                                    : "text-gray-700 border-yellow-300 hover:bg-yellow-50"
                                 }`}
+                            style={
+                                activePrice === price
+                                    ? {
+                                        background:
+                                            "radial-gradient(circle at center, #ffef9a 0%, #ffdb58 50%, #f6c41c 100%)",
+                                        boxShadow:
+                                            "0 1px 4px rgba(0,0,0,0.15), inset 0 2px 8px rgba(255,255,255,0.5)",
+                                        color: "#a20604",
+                                        fontWeight: 700,
+                                    }
+                                    : { background: "#fff" }
+                            }
+
                         >
                             ₹{price}
                         </button>

@@ -1,6 +1,8 @@
 import React, { Suspense, lazy } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Layout from "./layouts/Layout";
+import AddMoney from "./pages/AddMoney";
+import Withdraw from "./pages/Withdraw";
 
 // Lazy-loaded pages
 const Home = lazy(() => import("./pages/Home"));
@@ -56,6 +58,8 @@ function App() {
             <Route path="/terms-and-conditions" element={<Terms />} />
             <Route path="/privacy-statement" element={<PrivacyPolicy />} />
             <Route path="/contact-us" element={<ContactUs />} />
+            <Route path="/add-money" element={<AddMoney />} />
+            <Route path="/withdraw" element={<Withdraw />} />
 
           {/* Optional 404 fallback */}
           <Route

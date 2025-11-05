@@ -2,12 +2,13 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import LotteryTicket from "./LotteryTicket";
 import BuyTicketModal from "./BuyTicketModal";
+import DrawSelector from "./DrawSelector"; // ✅ new component
 
 const BuyTicketPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // 🎯 get from location state or localStorage
+  // 🎯 price and prize values
   const [price, setPrice] = useState(() => {
     return (
       location.state?.price ||
@@ -24,62 +25,43 @@ const BuyTicketPage = () => {
     );
   });
 
-  // 💾 persist values when coming from navigate()
   useEffect(() => {
-    if (location.state?.price) {
-      localStorage.setItem("ticketPrice", location.state.price);
-    }
-    if (location.state?.prizeValue) {
-      localStorage.setItem("ticketPrizeValue", location.state.prizeValue);
-    }
+    if (location.state?.price) localStorage.setItem("ticketPrice", location.state.price);
+    if (location.state?.prizeValue) localStorage.setItem("ticketPrizeValue", location.state.prizeValue);
   }, [location.state]);
 
-  // 🎯 fixed time options (with minutes)
   const drawTimes = ["11:05 AM", "12:15 PM", "1 PM", "3 PM", "5 PM"];
-
-  // 🧾 states
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
   const [drawDay, setDrawDay] = useState("");
   const [tickets, setTickets] = useState([]);
   const [loadingTickets, setLoadingTickets] = useState(true);
-
-  // 🧾 modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState(null);
 
-  // 🧮 helper → get weekday from date
   const getDayName = (date) =>
     new Date(date).toLocaleDateString("en-US", { weekday: "long" }).toUpperCase();
 
-  // 🧩 helper: convert "12:45 PM" → 24-hour minutes (e.g. 765)
-  const parseTimeToMinutes = (timeStr) => {
-    const [time, modifier] = timeStr.split(" ");
-    let [hours, minutes] = time.split(":").map(Number);
-
-    if (isNaN(minutes)) minutes = 0;
-
-    if (modifier === "PM" && hours !== 12) hours += 12;
-    if (modifier === "AM" && hours === 12) hours = 0;
-
-    return hours * 60 + minutes;
-  };
-
-  // 🧭 detect available time slots based on current time
   const getAvailableTimes = () => {
     const now = new Date();
     const currentMinutes = now.getHours() * 60 + now.getMinutes();
-
-    return drawTimes.filter((time) => parseTimeToMinutes(time) > currentMinutes);
+    const parse = (t) => {
+      const [time, mod] = t.split(" ");
+      let [h, m] = time.split(":").map(Number);
+      if (isNaN(m)) m = 0;
+      if (mod === "PM" && h !== 12) h += 12;
+      if (mod === "AM" && h === 12) h = 0;
+      return h * 60 + m;
+    };
+    return drawTimes.filter((t) => parse(t) > currentMinutes);
   };
 
-  // 🕐 init default date/time
+  // 🕐 initialize defaults
   useEffect(() => {
     const today = new Date().toISOString().split("T")[0];
     setSelectedDate(today);
-
     const availableTimes = getAvailableTimes();
-    if (availableTimes.length > 0) {
+    if (availableTimes.length) {
       setSelectedTime(availableTimes[0]);
     } else {
       const tomorrow = new Date();
@@ -89,15 +71,12 @@ const BuyTicketPage = () => {
     }
   }, []);
 
-  // 🧾 update draw day when date changes
   useEffect(() => {
     if (selectedDate) setDrawDay(getDayName(selectedDate));
   }, [selectedDate]);
 
-  // simulate fetching purchased tickets
   const purchasedTickets = ["10005", "10010", "10025", "10030", "10050"];
 
-  // 🎟️ auto-generate tickets whenever date or time changes
   useEffect(() => {
     if (!selectedDate || !selectedTime) return;
     setLoadingTickets(true);
@@ -107,7 +86,6 @@ const BuyTicketPage = () => {
       const totalTickets = 100;
       const drawDateFormatted = new Date(selectedDate).toLocaleDateString("en-GB");
 
-      // generate all tickets
       const generated = Array.from({ length: totalTickets }, (_, i) => ({
         id: (initialId + i).toString(),
         drawNumber: 200 + i,
@@ -118,7 +96,6 @@ const BuyTicketPage = () => {
         drawDay,
       }));
 
-      // ❌ filter out purchased ones
       const availableTickets = generated.filter(
         (ticket) => !purchasedTickets.includes(ticket.id)
       );
@@ -130,71 +107,28 @@ const BuyTicketPage = () => {
     return () => clearTimeout(timeout);
   }, [selectedDate, selectedTime, drawDay, price, prizeValue]);
 
-  // 🎯 when BUY button clicked on a ticket
   const handleBuyClick = (ticket) => {
     setSelectedTicket(ticket);
     setIsModalOpen(true);
   };
 
-  // 🎯 handle purchase confirmation
   const handleConfirmPurchase = () => {
     alert(`🎟️ Ticket ${selectedTicket.id} purchased successfully for ₹${selectedTicket.price}`);
     setIsModalOpen(false);
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col items-center py-8">
-      {/* 🎯 selection inputs */}
-      <div className="bg-white shadow-md rounded-lg p-5 w-full max-w-md mb-6">
-        {/* date */}
-        <div className="mb-4">
-          <label className="block font-semibold text-gray-700 mb-1">
-            Select Draw Date :
-          </label>
-          <input
-            type="date"
-            className="w-full border rounded-md p-2 text-sm"
-            min={new Date().toISOString().split("T")[0]}
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-          />
-        </div>
+    <div className="min-h-screen flex flex-col items-center py-4">
+      {/* 🧭 Date & Time Selector */}
+      <DrawSelector
+        drawTimes={drawTimes}
+        selectedDate={selectedDate}
+        selectedTime={selectedTime}
+        onDateChange={setSelectedDate}
+        onTimeChange={setSelectedTime}
+      />
 
-        {/* time */}
-        <div>
-          <label className="block font-semibold text-gray-700 mb-1">
-            Select Draw Time:
-          </label>
-          <div className="flex flex-wrap gap-3">
-            {drawTimes.map((time) => {
-              const now = new Date();
-              const isToday =
-                selectedDate === new Date().toISOString().split("T")[0];
-
-              const currentMinutes = now.getHours() * 60 + now.getMinutes();
-              const drawMinutes = parseTimeToMinutes(time);
-              const isPast = isToday && drawMinutes <= currentMinutes;
-
-              return (
-                <button
-                  key={time}
-                  onClick={() => !isPast && setSelectedTime(time)}
-                  disabled={isPast}
-                  className={`px-3 py-2 rounded-md text-sm font-semibold border transition ${
-                    selectedTime === time
-                      ? "bg-green-600 text-white border-green-600"
-                      : "border-gray-300 hover:bg-green-100"
-                  } disabled:opacity-40 disabled:cursor-not-allowed`}
-                >
-                  {time}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-      {/* ⏳ Loading spinner */}
+      {/* ⏳ Ticket Display */}
       {loadingTickets ? (
         <div className="flex flex-col items-center justify-center mt-10">
           <div className="w-10 h-10 border-4 border-green-500 border-t-transparent rounded-full animate-spin"></div>
@@ -218,7 +152,7 @@ const BuyTicketPage = () => {
         </p>
       )}
 
-      {/* 🎟️ Centralized Modal */}
+      {/* 🎟️ Purchase Modal */}
       {isModalOpen && selectedTicket && (
         <BuyTicketModal
           isOpen={isModalOpen}
