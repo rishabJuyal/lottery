@@ -18,7 +18,7 @@ const AddMoney = () => {
 
   return (
     <div
-      className="min-h-[calc(100vh-124px)] flex items-center justify-center p-6"
+      className="min-h-[calc(100vh-160px)] flex items-center justify-center p-6"
     >
       <form
         onSubmit={handleSubmit}

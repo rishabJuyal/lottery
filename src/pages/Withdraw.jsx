@@ -24,7 +24,7 @@ const Withdraw = () => {
 
   return (
     <div
-      className="min-h-[calc(100vh-124px)] flex items-center justify-center p-6"
+      className="min-h-[calc(100vh-160px)] flex items-center justify-center p-6"
     >
       <div
         className="w-full max-w-md p-6 shadow-lg"

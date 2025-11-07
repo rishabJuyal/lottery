@@ -6,11 +6,11 @@ const LoginPage = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#f5f2f0] relative px-7">
+    <div className="min-h-screen flex items-center justify-center bg-[var(--color-primary-light)] relative px-7">
       {/* Close button */}
       <button
         onClick={() => navigate("/")}
-        className="absolute top-3 right-3 text-black text-[50px] font-light leading-none hover:text-gray-300 transition"
+        className="absolute top-3 right-3 text-white text-[50px] font-light leading-none hover:text-gray-300 transition"
       >
         ×
       </button>

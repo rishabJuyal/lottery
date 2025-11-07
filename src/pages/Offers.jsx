@@ -5,7 +5,7 @@ const Offers = () => {
   const offers = [poster, poster, poster, poster]; // 👈 Add as many as you want
 
   return (
-    <div className="min-h-[calc(100vh-124px)] p-2 pt-4">
+    <div className="min-h-[calc(100vh-160px)] p-2 pt-4">
       <div className="flex flex-col items-center gap-4">
         {offers.map((offer, index) => (
           <div

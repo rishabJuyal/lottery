@@ -72,7 +72,7 @@ const ResultPage = () => {
 
     return (
         <div
-            className="pb-4 min-h-[calc(100vh-124px)] bg-orange-100"
+            className="pb-4 min-h-[calc(100vh-160px)] bg-orange-100"
         >
             {/* Price Tabs + Date Selector (in one line) */}
             {/* Tabs & Date Selector */}

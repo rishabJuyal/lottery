@@ -14,7 +14,7 @@ const Profile = () => {
 
   return (
     <div
-      className="min-h-[calc(100vh-124px)] flex items-center justify-center p-4"
+      className="min-h-[calc(100vh-160px)] flex items-center justify-center p-4"
     //   style={{
     //     background: "linear-gradient(to bottom, #ffed33 0%, #f9a664 20%, #f46d04 80%, #a20604 100%)",
     //   }}
@@ -46,11 +46,29 @@ const Profile = () => {
           <p className="text-xs text-gray-500 tracking-wide mt-1">{user.phone}</p>
         </div>
 
-        {/* Balance */}
-        <div className="text-center mt-6 mb-6">
-          <p className="text-xs text-gray-500 uppercase">Wallet Balance</p>
-          <p className="text-2xl font-bold text-[#a20604] mt-1">₹{user.balance.toFixed(2)}</p>
+        {/* Balance Card */}
+        {/* Balance Card */}
+        <div
+          className="my-4 mx-auto w-full max-w-xs rounded-lg p-6 text-center shadow-[0_8px_15px_rgba(200,160,90,0.3)]"
+          style={{
+            background: "linear-gradient(135deg, #ffed33 0%, #f9c846 40%, #d99a0c 70%, #a67600 100%)",
+            boxShadow: "0 4px 15px rgba(189, 154, 52, 0.6)",
+          }}
+        >
+          <p
+            className="text-sm text-gray-600 mb-1"
+            style={{ fontWeight: 500, fontFamily: "sans-serif" }}
+          >
+            My Balance
+          </p>
+          <p
+            className="text-4xl font-extrabold text-yellow-900"
+            style={{ fontFamily: "sans-serif" }}
+          >
+            ₹{user.balance.toFixed(2)}
+          </p>
         </div>
+
 
         {/* Buttons */}
         <div className="flex gap-3 mb-6">

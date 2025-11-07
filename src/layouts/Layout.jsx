@@ -4,6 +4,7 @@ import Header from "../components/Header";
 import BottomNav from "../components/BottomNav";
 import { useSelector } from "react-redux";
 import { Outlet } from "react-router-dom"; // ✅ Import Outlet
+import Marquee from "../components/Marquee.jsx";
 
 export default function Layout() {
   const theme = useSelector((state) => state.theme.mode); // Get theme from Redux
@@ -26,6 +27,7 @@ export default function Layout() {
 
         {/* ✅ Use <Outlet /> instead of children */}
         <main className="flex-1 bg-[#fff8e6] mb-18 mt-13">
+          <Marquee />
           <Outlet />
         </main>
 
