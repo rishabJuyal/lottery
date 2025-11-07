@@ -67,7 +67,7 @@ const DrawGames = () => {
   };
 
   return (
-    <div className="bg-white min-h-screen flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen flex flex-col items-center justify-center p-4">
       {/* 🎟️ Ticket Cards */}
       <div className="flex flex-wrap justify-center gap-4 max-w-6xl">
         {tickets.map((ticket) => (

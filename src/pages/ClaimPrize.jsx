@@ -43,9 +43,9 @@ const ClaimPrize = () => {
     .filter((ticket) => ticket.unclaimed);
 
   return (
-    <div className="bg-gray-100 min-h-screen py-4">
+    <div className="min-h-screen py-4">
       <h1 className="text-center text-lg font-bold text-green-700 mb-4">
-        🎁 Claim Your Prize
+        🎁 CLAIM YOUR PRIZE 🎁
       </h1>
 
       {unclaimedTickets.length > 0 ? (
