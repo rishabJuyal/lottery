@@ -166,30 +166,32 @@ const Home = () => {
       <img src={poster} className="w-full h-auto mb-4" alt="Poster" />
 
       <div className="p-3 space-y-2">
-        <section>
-          <h2 className="font-bold text-[14px] mb-2 flex items-center gap-2">
-            DRAW GAMES (Next:{" "}
-            {nearestSlotName || (loading ? "Loading..." : "No Slots")})
-            {countdown && (
-              <span className="text-blue-600 font-semibold">
-                ⏳ {countdown}
-              </span>
-            )}
-          </h2>
+      <section>
+  <h2 className="font-bold text-[14px] mb-2 flex items-center justify-between">
+    <span>
+      DRAW GAMES ({nearestSlotName || (loading ? "Loading..." : "No Slots")})
+    </span>
+    {countdown && (
+      <span className="text-amber-800 text-lg text-nowrap font-semibold ml-2">
+        ⏳ {countdown}
+      </span>
+    )}
+  </h2>
 
-          <div className="flex space-x-3 overflow-x-auto p-4 pt-1 -mx-3">
-            {tickets.map((ticket) => (
-              <LotteryTicket
-                key={ticket.id}
-                {...ticket}
-                canPurchase={true}
-                loading={loading}
-                onBuyClick={() => handleBuyClick(ticket)}
-              />
-            ))}
-            {!loading && tickets.length === 0 && <div>No tickets available</div>}
-          </div>
-        </section>
+  <div className="flex space-x-3 overflow-x-auto p-4 pt-1 -mx-3">
+    {tickets.map((ticket) => (
+      <LotteryTicket
+        key={ticket.id}
+        {...ticket}
+        canPurchase={true}
+        loading={loading}
+        onBuyClick={() => handleBuyClick(ticket)}
+      />
+    ))}
+    {!loading && tickets.length === 0 && <div>No tickets available</div>}
+  </div>
+</section>
+
 
         <section>
           <h2 className="font-bold text-[14px] mb-2">SCRATCH CARDS</h2>

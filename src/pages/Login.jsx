@@ -98,7 +98,7 @@ const LoginPage = () => {
               type="text"
               placeholder="User ID"
               value={userId}
-              onChange={(e) => setUserId(e.target.value)}
+              onChange={(e) => setUserId(e.target.value.toUpperCase())}
               className="bg-white w-full rounded-full border-2 border-gray-300 pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder-gray-400"
               required
             />

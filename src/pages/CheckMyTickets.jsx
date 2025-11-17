@@ -42,10 +42,10 @@ const CheckMyTickets = () => {
           prizeValue: t.prizePool || 100000,
           drawDate: t.lotteryDate.split("-").reverse().join("/"), // DD/MM/YYYY
           drawTime: t.timeSlot.slice(0, 5) + " PM", // simple conversion
-          won: t.status === "WINNER",
+          won: t.status === "CLAIMED",
           loss: t.status === "EXPIRED",
           pending: t.status === "ACTIVE",
-          unclaimed: t.status === "UNCLAIMED",
+          unclaimed: t.status === "WINNER",
         }));
 
         setTickets(mappedTickets);

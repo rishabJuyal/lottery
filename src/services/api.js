@@ -21,14 +21,24 @@ axiosInstance.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response interceptor: handle refresh token automatically
+// Response interceptor: handle refresh token automatically and logout on 403
 axiosInstance.interceptors.response.use(
   (response) => response.data, // Return only the data
   async (error) => {
     const originalRequest = error.config;
+    const status = error.response?.status;
 
+    // Logout on 403 Forbidden
+    if (status === 403) {
+      localStorage.removeItem("authToken");
+      localStorage.removeItem("refreshToken");
+      window.location.href = "/login";
+      return Promise.reject(error);
+    }
+
+    // Handle 401 Unauthorized with refresh token
     if (
-      error.response?.status === 401 &&
+      status === 401 &&
       !originalRequest._retry &&
       localStorage.getItem("refreshToken")
     ) {
