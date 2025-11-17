@@ -72,9 +72,9 @@ const LotteryTicket = ({
               >
                 {prizeValue}
               </span>
-              <span className="text-[20px] font-bold text-gray-800 ml-[2px]">
+              {/* <span className="text-[20px] font-bold text-gray-800 ml-[2px]">
                 x20
-              </span>
+              </span> */}
             </div>
             <div className="text-[10px] font-bold text-gray-800">
               {drawNumber}th Draw On {drawDate}
@@ -95,7 +95,7 @@ const LotteryTicket = ({
             >
               ABCD EFGH IJKL MNOP QRST ABCD EFGH IJKL MNOP QRST ABCD EFGH IJKL MNOP QRST
             </div>
-            <div className="relative z-10 text-[24px] font-extrabold tracking-wider text-gray-900">
+            <div className="relative z-10 text-[22px] font-extrabold tracking-wider text-gray-900 text-nowrap">
               <span className="font-sans text-gray-900">70A</span>{" "}
               <span className="font-mono text-gray-900">{id}</span>
             </div>

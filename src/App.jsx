@@ -1,8 +1,8 @@
 import React, { Suspense, lazy } from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Layout from "./layouts/Layout";
-import AddMoney from "./pages/AddMoney";
-import Withdraw from "./pages/Withdraw";
+// import AddMoney from "./pages/AddMoney";
+// import Withdraw from "./pages/Withdraw";
 
 // Lazy-loaded pages
 const Home = lazy(() => import("./pages/Home"));
@@ -20,14 +20,18 @@ const Settings = lazy(() => import("./pages/Settings"));
 const Terms = lazy(() => import("./pages/Terms"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const ContactUs = lazy(() => import("./pages/ContactUs"));
-
 const Login = lazy(() => import("./pages/Login")); 
 const ResultPage = lazy(() => import("./pages/ResultPage"));
+
+// ✅ ProtectedRoute component
+const ProtectedRoute = ({ children }) => {
+  const isAuthenticated = !!localStorage.getItem("authToken"); // Example auth check
+  return isAuthenticated ? children : <Navigate to="/login" replace />;
+};
 
 function App() {
   return (
     <Router>
-      {/* Suspense provides fallback while pages load */}
       <Suspense
         fallback={
           <div className="flex items-center justify-center h-screen text-blue-700 text-lg font-semibold">
@@ -36,40 +40,81 @@ function App() {
         }
       >
         <Routes>
-          {/* ✅ Login route (not under Layout) */}
+          {/* Public routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/" element={<Layout />}>
+            <Route index element={<Home />} />
+            <Route path="about" element={<About />} />
+            <Route path="contact" element={<Contact />} />
+            <Route path="draw-games" element={<DrawGames />} />
+            <Route path="offers" element={<Offers />} />
+            <Route path="claim-prize" element={<ClaimPrize />} />
+            <Route path="responsible-gambling" element={<ResponsibleGambling />} />
+            <Route path="terms-and-conditions" element={<Terms />} />
+            <Route path="privacy-statement" element={<PrivacyPolicy />} />
+            <Route path="contact-us" element={<ContactUs />} />
+            <Route path="result" element={<ResultPage />} />
 
+            {/* Protected routes */}
+            <Route
+              path="check-ticket"
+              element={
+                <ProtectedRoute>
+                  <CheckMyTickets />
+                </ProtectedRoute>
+              }
+            />
+            {/* <Route
+              path="buy-ticket"
+              element={
+                <ProtectedRoute>
+                  <BuyTicketPage />
+                </ProtectedRoute>
+              }
+            /> */}
+            <Route
+              path="my-profile"
+              element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="settings"
+              element={
+                <ProtectedRoute>
+                  <Settings />
+                </ProtectedRoute>
+              }
+            />
+            {/* <Route
+              path="add-money"
+              element={
+                <ProtectedRoute>
+                  <AddMoney />
+                </ProtectedRoute>
+              }
+            /> */}
+            {/* <Route
+              path="withdraw"
+              element={
+                <ProtectedRoute>
+                  <Withdraw />
+                </ProtectedRoute>
+              }
+            /> */}
 
-          {/* ✅ Routes inside Layout */}
-          <Route element={<Layout />}>
-            <Route path="/" element={<Home />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/check-ticket" element={<CheckMyTickets />} />
-            <Route path="/buy-ticket" element={<BuyTicketPage />} />
-            <Route path="/draw-games" element={<DrawGames />} />
-            <Route path="/my-profile" element={<Profile />} />
-            <Route path="/result" element={<ResultPage />} />
-            <Route path="/offers" element={<Offers />} />
-            <Route path="/claim-prize" element={<ClaimPrize />} />
-            <Route path="/responsible-gambling" element={<ResponsibleGambling />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/terms-and-conditions" element={<Terms />} />
-            <Route path="/privacy-statement" element={<PrivacyPolicy />} />
-            <Route path="/contact-us" element={<ContactUs />} />
-            <Route path="/add-money" element={<AddMoney />} />
-            <Route path="/withdraw" element={<Withdraw />} />
-
-          {/* Optional 404 fallback */}
-          <Route
-            path="*"
-            element={
-              <div className="flex items-center justify-center h-screen text-red-600 font-bold">
-                404 - Page Not Found
-              </div>
-            }
-          />
+            {/* 404 fallback */}
+            <Route
+              path="*"
+              element={
+                <div className="flex items-center justify-center h-screen text-red-600 font-bold">
+                  404 - Page Not Found
+                </div>
+              }
+            />
           </Route>
         </Routes>
       </Suspense>

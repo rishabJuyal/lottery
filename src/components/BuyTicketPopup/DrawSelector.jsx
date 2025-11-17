@@ -1,115 +1,149 @@
-// src/components/BuyTicketPopup/DrawSelector.jsx
 import React, { useEffect, useState } from "react";
 
 const DrawSelector = ({
-  drawTimes,
-  selectedDate,
-  selectedTime,
-  onDateChange,
-  onTimeChange,
+    drawTimes, // FULL slot list from API
+    selectedDate,
+    selectedTime,
+    selectedPrice,
+    onDateChange,
+    onTimeChange,
+    onPriceChange,
 }) => {
-  const parseTimeToMinutes = (timeStr) => {
-    const [time, modifier] = timeStr.split(" ");
-    let [hours, minutes] = time.split(":").map(Number);
-    if (isNaN(minutes)) minutes = 0;
-    if (modifier === "PM" && hours !== 12) hours += 12;
-    if (modifier === "AM" && hours === 12) hours = 0;
-    return hours * 60 + minutes;
-  };
+    const today = new Date().toISOString().split("T")[0];
+    const [availableTimes, setAvailableTimes] = useState([]);
 
-  const today = new Date().toISOString().split("T")[0];
-  const [availableTimes, setAvailableTimes] = useState([]);
+    /** Filter times based on today’s date */
+    useEffect(() => {
+        const now = new Date();
+        const currentMinutes = now.getHours() * 60 + now.getMinutes();
 
-  useEffect(() => {
-    const now = new Date();
-    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+        const toMins = (t) => {
+            const [h, m] = t.value.split(":").map(Number);
+            return h * 60 + m;
+        };
 
-    const filtered = drawTimes.filter((time) => {
-      if (selectedDate !== today) return true;
-      return parseTimeToMinutes(time) > currentMinutes;
-    });
+        const filtered =
+            selectedDate !== today
+                ? drawTimes
+                : drawTimes.filter((slot) => toMins(slot) > currentMinutes);
 
-    setAvailableTimes(filtered.length > 0 ? filtered : drawTimes);
-  }, [selectedDate, drawTimes, today]);
+        setAvailableTimes(filtered.length ? filtered : drawTimes);
+    }, [selectedDate, drawTimes]);
 
-  return (
-    <div
-      className="w-[320px] max-w-md p-2 shadow-lg"
-      style={{
-        background: "linear-gradient(180deg, #b40c02 0%, #f46d04 100%)",
-        border: "3px solid #ffed33",
-        borderRadius: "0", // 🔥 No rounded corners
-        boxShadow: "0 4px 12px rgba(164, 6, 4, 0.4)",
-      }}
-    >
-      <label
-        className="block text-lg font-bold uppercase text-center mb-4"
-        style={{
-          color: "#ffed33",
-          letterSpacing: "0.1em",
-          textShadow: "1px 1px 2px rgba(0,0,0,0.4)",
-        }}
-      >
-        Draw Selection
-      </label>
+    /** Denominations for selected time */
+    const denominations =
+        drawTimes
+            .find((t) => t.value === selectedTime)
+            ?.denominations?.map((d) => d.denomination) || [];
 
-      <div className="flex items-center gap-4">
-        {/* Time Dropdown */}
-        <div className="flex-1">
-          <label
-            className="block text-xs font-semibold mb-1 uppercase"
-            style={{ color: "#ffe19c" }}
-          >
-            Time
-          </label>
-          <select
-            className="w-full px-3 py-2 text-sm font-semibold focus:outline-none"
+    return (
+        <div
+            className="w-[320px] max-w-md p-2 shadow-lg m-auto mt-2"
             style={{
-              backgroundColor: "#f9a664",
-              border: "2px solid #f46d04",
-              color: "#a20604",
-              borderRadius: "0", // 🔥 edgy flat look
-              cursor: "pointer",
-              outlineColor: "#e63820",
+                background: "linear-gradient(180deg, #b40c02 0%, #f46d04 100%)",
+                border: "3px solid #ffed33",
+                borderRadius: "0",
+                boxShadow: "0 4px 12px rgba(164, 6, 4, 0.4)",
             }}
-            value={selectedTime}
-            onChange={(e) => onTimeChange(e.target.value)}
-          >
-            {availableTimes.map((time) => (
-              <option key={time} value={time}>
-                {time}
-              </option>
-            ))}
-          </select>
-        </div>
+        >
+            <label
+                className="block text-lg font-bold uppercase text-center mb-4"
+                style={{
+                    color: "#ffed33",
+                    letterSpacing: "0.1em",
+                    textShadow: "1px 1px 2px rgba(0,0,0,0.4)",
+                }}
+            >
+                Draw Selection
+            </label>
 
-        {/* Date Picker */}
-        <div className="flex-1">
-          <label
-            className="block text-xs font-semibold mb-1 uppercase"
-            style={{ color: "#ffe19c" }}
-          >
-            Date
-          </label>
-          <input
-            type="date"
-            min={today}
-            value={selectedDate}
-            onChange={(e) => onDateChange(e.target.value)}
-            className="w-full px-3 py-2 text-sm font-semibold focus:outline-none"
-            style={{
-              backgroundColor: "#f9a664",
-              border: "2px solid #f46d04",
-              color: "#a20604",
-              borderRadius: "0", // 🔥 edgy
-              cursor: "pointer",
-              outlineColor: "#e63820",
-            }}
-          />
+            <div className="flex items-center gap-4">
+                {/* TIME DROPDOWN */}
+                <div className="flex-1">
+                    <label
+                        className="block text-xs font-semibold mb-1 uppercase"
+                        style={{ color: "#ffe19c" }}
+                    >
+                        Time
+                    </label>
+                    <select
+                        className="w-full px-3 py-2 text-sm font-semibold focus:outline-none"
+                        style={{
+                            backgroundColor: "#f9a664",
+                            border: "2px solid #f46d04",
+                            color: "#a20604",
+                            borderRadius: "0",
+                            cursor: "pointer",
+                            outlineColor: "#e63820",
+                        }}
+                        value={selectedTime}
+                        onChange={(e) => onTimeChange(e.target.value)}
+                    >
+                        {availableTimes.map((slot, idx) => (
+                            <option key={`${slot.value}-${idx}`} value={slot.value}>
+                                {slot.label}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
+                {/* DATE PICKER */}
+                <div className="flex-1">
+                    <label
+                        className="block text-xs font-semibold mb-1 uppercase"
+                        style={{ color: "#ffe19c" }}
+                    >
+                        Date
+                    </label>
+                    <input
+                        type="date"
+                        min={today}
+                        value={selectedDate}
+                        onChange={(e) => onDateChange(e.target.value)}
+                        className="w-full px-3 py-2 text-sm font-semibold focus:outline-none"
+                        style={{
+                            backgroundColor: "#f9a664",
+                            border: "2px solid #f46d04",
+                            color: "#a20604",
+                            borderRadius: "0",
+                            cursor: "pointer",
+                            outlineColor: "#e63820",
+                        }}
+                    />
+                </div>
+            </div>
+
+            {/* PRICE DROPDOWN */}
+            <div className="mt-4">
+                <label
+                    className="block text-xs font-semibold mb-1 uppercase"
+                    style={{ color: "#ffe19c" }}
+                >
+                    PRICE (₹)
+                </label>
+
+                <select
+                    className="w-full px-3 py-2 text-sm font-semibold focus:outline-none"
+                    style={{
+                        backgroundColor: "#f9a664",
+                        border: "2px solid #f46d04",
+                        color: "#a20604",
+                        borderRadius: "0",
+                        cursor: "pointer",
+                        outlineColor: "#e63820",
+                    }}
+                    value={selectedPrice}
+                    onChange={(e) => onPriceChange(Number(e.target.value))}
+                >
+                    {denominations.map((price) => (
+                        <option key={price} value={price}>
+                            {price}
+                        </option>
+                    ))}
+                </select>
+            </div>
         </div>
-      </div>
-    </div>
-  );
+    );
 };
 
 export default DrawSelector;

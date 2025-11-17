@@ -8,6 +8,7 @@ import {
     ShieldAlert,
     HelpCircle,
     Settings,
+    ArrowBigLeft,
   } from "lucide-react";
   
   export const sidebarLinks = [
@@ -20,5 +21,6 @@ import {
     { label: "RESPONSIBLE GAMBLING", icon: ShieldAlert, path: "/responsible-gambling" },
     // { label: "FAQS", icon: HelpCircle, path: "/faqs" },
     { label: "SETTINGS", icon: Settings, path: "/settings", rightArrow: true },
+    { label: "LOG OUT", icon: ArrowBigLeft, path: "/login" },
   ];
   

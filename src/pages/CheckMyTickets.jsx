@@ -1,149 +1,197 @@
-// 📁 pages/CheckMyTickets.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import LotteryTicket from "../components/BuyTicketPopup/LotteryTicket";
+import api from "../services/api";
 
 const CheckMyTickets = () => {
-  const prices = ["6", "10", "20", "100"];
+  const statusOptions = ["all", "won", "lost", "pending", "unclaimed"];
 
-  // 🗓️ Get today's and yesterday's date
   const today = new Date();
-  const yesterday = new Date();
-  yesterday.setDate(today.getDate() - 1);
-
   const formatDate = (date) =>
     `${String(date.getDate()).padStart(2, "0")}/${String(
       date.getMonth() + 1
     ).padStart(2, "0")}/${date.getFullYear()}`;
-
   const todayStr = formatDate(today);
-  const yesterdayStr = formatDate(yesterday);
 
-  // 🧩 Dummy Ticket History Data
-  const ticketsData = {
-    "6": [
-      { id: "60001", drawNumber: 301, prizeValue: "1,00,000", drawDate: todayStr, drawTime: "11 AM", won: true, loss: false, pending: false, unclaimed: false },
-      { id: "60002", drawNumber: 302, prizeValue: "1,00,000", drawDate: todayStr, drawTime: "1 PM", won: false, loss: true, pending: false, unclaimed: false },
-      { id: "60003", drawNumber: 303, prizeValue: "1,00,000", drawDate: todayStr, drawTime: "3 PM", won: false, loss: false, pending: true, unclaimed: false },
-      { id: "60004", drawNumber: 304, prizeValue: "1,00,000", drawDate: yesterdayStr, drawTime: "5 PM", won: false, loss: false, pending: false, unclaimed: true },
-    ],
-    "10": [
-      { id: "10001", drawNumber: 401, prizeValue: "5,00,000", drawDate: todayStr, drawTime: "11 AM", won: false, loss: true, pending: false, unclaimed: false },
-      { id: "10002", drawNumber: 402, prizeValue: "5,00,000", drawDate: todayStr, drawTime: "1 PM", won: false, loss: false, pending: true, unclaimed: false },
-      { id: "10003", drawNumber: 403, prizeValue: "5,00,000", drawDate: todayStr, drawTime: "3 PM", won: true, loss: false, pending: false, unclaimed: false },
-      { id: "10004", drawNumber: 404, prizeValue: "5,00,000", drawDate: yesterdayStr, drawTime: "1 PM", won: false, loss: false, pending: false, unclaimed: true },
-    ],
-    "20": [
-      { id: "20001", drawNumber: 501, prizeValue: "10,00,000", drawDate: todayStr, drawTime: "11 AM", won: false, loss: false, pending: true, unclaimed: false },
-      { id: "20002", drawNumber: 502, prizeValue: "10,00,000", drawDate: todayStr, drawTime: "3 PM", won: true, loss: false, pending: false, unclaimed: false },
-      { id: "20003", drawNumber: 503, prizeValue: "10,00,000", drawDate: yesterdayStr, drawTime: "11 AM", won: false, loss: true, pending: false, unclaimed: false },
-      { id: "20004", drawNumber: 504, prizeValue: "10,00,000", drawDate: yesterdayStr, drawTime: "3 PM", won: false, loss: false, pending: false, unclaimed: true },
-    ],
-    "100": [
-      { id: "100001", drawNumber: 701, prizeValue: "50,00,000", drawDate: todayStr, drawTime: "1 PM", won: true, loss: false, pending: false, unclaimed: false },
-      { id: "100002", drawNumber: 702, prizeValue: "50,00,000", drawDate: todayStr, drawTime: "5 PM", won: false, loss: false, pending: true, unclaimed: false },
-      { id: "100003", drawNumber: 703, prizeValue: "50,00,000", drawDate: yesterdayStr, drawTime: "11 AM", won: false, loss: true, pending: false, unclaimed: false },
-      { id: "100004", drawNumber: 704, prizeValue: "50,00,000", drawDate: yesterdayStr, drawTime: "3 PM", won: false, loss: false, pending: false, unclaimed: true },
-    ],
-  };
+  const [tickets, setTickets] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [activePrice, setActivePrice] = useState(""); // will be set dynamically
+  const [selectedDate, setSelectedDate] = useState(todayStr);
+  const [statusFilter, setStatusFilter] = useState("all");
 
-  const [activePrice, setActivePrice] = useState(prices[0]);
-  const [selectedDate, setSelectedDate] = useState(todayStr); // Default to today
-
-  // 🧮 Convert drawDate + drawTime → Date object
   const parseDateTime = (dateStr, timeStr) => {
-    const [day, month, year] = dateStr.split("/");
-    const [time, meridian] = timeStr.split(" ");
-    let [hours, minutes] = time.split(":").map(Number);
-    if (meridian === "PM" && hours < 12) hours += 12;
-    if (meridian === "AM" && hours === 12) hours = 0;
-    return new Date(year, month - 1, day, hours, minutes || 0);
+    const [year, month, day] = dateStr.split("-");
+    const [hours, minutes, seconds] = timeStr.split(":");
+    return new Date(year, month - 1, day, hours, minutes, seconds);
   };
 
-  // 🔄 Sort & filter tickets by date
+  // Fetch tickets from API
+  useEffect(() => {
+    const fetchTickets = async () => {
+      try {
+        setLoading(true);
+        const userInfo = JSON.parse(localStorage.getItem("userInfo"));
+        if (!userInfo?.userId) return;
+
+        const response = await api.get(`/gamma/lottery/my-tickets`);
+        const data = response.tickets || [];
+
+        const mappedTickets = data.map((t) => ({
+          id: t.ticketNumber,
+          drawNumber: t.slotCode,
+          price: t.denomination,
+          prizeValue: t.prizePool || 100000,
+          drawDate: t.lotteryDate.split("-").reverse().join("/"), // DD/MM/YYYY
+          drawTime: t.timeSlot.slice(0, 5) + " PM", // simple conversion
+          won: t.status === "WINNER",
+          loss: t.status === "EXPIRED",
+          pending: t.status === "ACTIVE",
+          unclaimed: t.status === "UNCLAIMED",
+        }));
+
+        setTickets(mappedTickets);
+
+        // Dynamically set unique prices from tickets
+        const uniquePrices = [...new Set(mappedTickets.map((t) => t.price.toString()))].sort(
+          (a, b) => a - b
+        );
+        setActivePrice(uniquePrices[0] || ""); // set first price as default
+      } catch (err) {
+        console.error("Failed to fetch tickets", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTickets();
+  }, []);
+
+  // Filter & sort tickets
   const sortedTickets =
-    ticketsData[activePrice]
-      ?.filter((ticket) => ticket.drawDate === selectedDate)
+    tickets
+      ?.filter((ticket) => {
+        if (ticket.price.toString() !== activePrice) return false;
+        if (ticket.drawDate !== selectedDate) return false;
+
+        if (statusFilter === "won" && !ticket.won) return false;
+        if (statusFilter === "lost" && !ticket.loss) return false;
+        if (statusFilter === "pending" && !ticket.pending) return false;
+        if (statusFilter === "unclaimed" && !ticket.unclaimed) return false;
+
+        return true;
+      })
       .sort(
         (a, b) =>
-          parseDateTime(b.drawDate, b.drawTime) - parseDateTime(a.drawDate, a.drawTime)
+          parseDateTime(b.drawDate.split("/").reverse().join("-"), b.drawTime) -
+          parseDateTime(a.drawDate.split("/").reverse().join("-"), a.drawTime)
       ) || [];
+
+  // Compute unique prices from tickets for rendering tabs
+  const prices = useMemo(() => {
+    return [...new Set(tickets.map((t) => t.price.toString()))].sort((a, b) => a - b);
+  }, [tickets]);
 
   return (
     <div className="pb-4 min-h-screen">
-      {/* Tabs + Date Selector */}
-      <div 
-      style={{ background: "var(--bg-gradient)" }}
-      className="flex items-center justify-between px-1 py-2 mb-4">
-        {/* Price Tabs */}
-        <div className="flex gap-2 scrollbar-hide">
-          {prices.map((price) => (
-            <button
-              key={price}
-              onClick={() => setActivePrice(price)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all duration-200 ${activePrice === price
-                ? "bg-orange-400 text-white shadow-md scale-105"
-                : "bg-white text-gray-700 border border-yellow-300 hover:bg-green-50"
-            }`}
-            >
-              ₹{price}
-            </button>
-          ))}
-        </div>
+{/* HEADER: Price Tabs + Dropdown + Date Selector */}
+<div style={{ background: "var(--bg-gradient)" }} className="px-1 py-2 mb-4 space-y-2">
 
-        {/* Date Selector */}
-        <div className="ml-2">
-          <input
-            type="date"
-            value={(() => {
-              const [day, month, year] = selectedDate.split("/");
-              return `${year}-${month}-${day}`;
-            })()}
-            onChange={(e) => {
-              const [year, month, day] = e.target.value.split("-");
-              setSelectedDate(`${day}/${month}/${year}`);
-            }}
-            max={new Date().toISOString().split("T")[0]} // prevent future dates
-            className="w-26 text-xs rounded-lg font-medium border border-yellow-600 px-2 py-1.5 bg-white shadow-sm focus:outline-none focus:ring-1 focus:ring-orange-500 appearance-none"
+  {/* First line: Prices + Status Dropdown */}
+  <div className="flex flex-wrap items-center gap-2">
+    <div className="flex gap-2 overflow-x-auto scrollbar-hide flex-1">
+      {prices.map((price) => (
+        <button
+          key={price}
+          onClick={() => setActivePrice(price)}
+          style={
+            activePrice === price
+              ? {
+                  background:
+                    "radial-gradient(circle at center, #ffef9a 0%, #ffdb58 50%, #f6c41c 100%)",
+                }
+              : {}
+          }
+          className={`px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition-all duration-200 ${
+            activePrice === price
+              ? "text-red-800 shadow-md scale-105"
+              : "bg-white text-gray-700 border border-yellow-300 hover:bg-green-50"
+          }`}
+        >
+          ₹{price}
+        </button>
+      ))}
+    </div>
 
-          />
-        </div>
-      </div>
+    <select
+      value={statusFilter}
+      onChange={(e) => setStatusFilter(e.target.value)}
+      className="text-xs border border-yellow-600 bg-white px-2 py-1 shadow-sm w-24"
+    >
+      {statusOptions.map((status) => (
+        <option key={status} value={status}>
+          {status.charAt(0).toUpperCase() + status.slice(1)}
+        </option>
+      ))}
+    </select>
+  </div>
+
+  {/* Second line: Date Selector */}
+  <div className="mt-2 w-full">
+    <input
+      type="date"
+      value={(() => {
+        const [d, m, y] = selectedDate.split("/");
+        return `${y}-${m}-${d}`;
+      })()}
+      onChange={(e) => {
+        const [y, m, d] = e.target.value.split("-");
+        setSelectedDate(`${d}/${m}/${y}`);
+      }}
+      max={new Date().toISOString().split("T")[0]}
+      className="w-full text-xs font-medium border border-yellow-600 px-2 py-1.5 bg-white shadow-sm focus:outline-none focus:ring-1 focus:ring-orange-500 appearance-none"
+    />
+  </div>
+</div>
+
 
       {/* Ticket List */}
-      <div className="flex flex-col gap-2">
-        {sortedTickets.length > 0 ? (
-          sortedTickets.map((ticket) => (
-            <div key={ticket.id} className="bg-amber-300 mx-auto pt-1 rounded shadow-sm">
-              <p className="px-2 text-right text-gray-800 text-[10px] font-bold">
-                Draw Date: {ticket.drawDate} — Time: {ticket.drawTime}
-              </p>
+      {loading ? (
+        <p className="text-center text-gray-500 mt-4">Loading tickets...</p>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {sortedTickets.length > 0 ? (
+            sortedTickets.map((ticket) => (
+              <div key={ticket.id} className="bg-amber-300 mx-auto pt-1 rounded shadow-sm">
+                <p className="px-2 text-right text-gray-800 text-[10px] font-bold">
+                  Draw Date: {ticket.drawDate} — Time: {ticket.drawTime}
+                </p>
 
-              <LotteryTicket
-                id={ticket.id}
-                drawNumber={ticket.drawNumber}
-                price={activePrice}
-                prizeValue={ticket.prizeValue}
-                drawDate={ticket.drawDate}
-                drawTime={ticket.drawTime}
-                drawDay={new Date(ticket.drawDate.split("/").reverse().join("-"))
-                  .toLocaleDateString("en-US", { weekday: "long" })
-                  .toUpperCase()}
-                canPurchase={false}
-                loading={false}
-                onBuyClick={() => {}}
-                won={ticket.won}
-                loss={ticket.loss}
-                pending={ticket.pending}
-                unclaimed={ticket.unclaimed}
-              />
-            </div>
-          ))
-        ) : (
-          <p className="text-center text-gray-500 text-xs mt-4">
-            No tickets found for this date.
-          </p>
-        )}
-      </div>
+                <LotteryTicket
+                  id={ticket.id}
+                  drawNumber={ticket.drawNumber}
+                  price={ticket.price}
+                  prizeValue={ticket.prizeValue}
+                  drawDate={ticket.drawDate}
+                  drawTime={ticket.drawTime}
+                  drawDay={new Date(ticket.drawDate.split("/").reverse().join("-"))
+                    .toLocaleDateString("en-US", { weekday: "long" })
+                    .toUpperCase()}
+                  canPurchase={false}
+                  loading={false}
+                  onBuyClick={() => {}}
+                  won={ticket.won}
+                  loss={ticket.loss}
+                  pending={ticket.pending}
+                  unclaimed={ticket.unclaimed}
+                />
+              </div>
+            ))
+          ) : (
+            <p className="text-center text-gray-500 text-xs mt-4">
+              No tickets found for this date & status.
+            </p>
+          )}
+        </div>
+      )}
     </div>
   );
 };

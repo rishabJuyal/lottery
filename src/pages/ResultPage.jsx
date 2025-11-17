@@ -123,7 +123,7 @@ const ResultPage = () => {
                             setSelectedDate(`${day}/${month}/${year}`);
                         }}
                         max={new Date().toISOString().split("T")[0]} // prevent future dates
-                        className="w-26 text-xs rounded-lg font-medium border border-yellow-600 px-2 py-1.5 bg-white shadow-sm focus:outline-none focus:ring-1 focus:ring-orange-500 appearance-none"
+                        className="w-26 text-xs font-medium border border-yellow-600 px-2 py-1.5 bg-white shadow-sm focus:outline-none focus:ring-1 focus:ring-orange-500 appearance-none"
                     />
                 </div>
 
