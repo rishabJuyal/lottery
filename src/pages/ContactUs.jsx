@@ -2,7 +2,7 @@ import React from "react";
 
 const ContactUs = () => {
   return (
-    <div className="min-h-[calc(100vh-160px)] flex items-center justify-center bg-gray-100 p-4">
+    <div className="min-h-[calc(100vh-160px)] flex items-center justify-center bg-orange-100 p-4">
       <div className="bg-white shadow-lg max-w-3xl w-full p-8">
         <h1 className="text-2xl font-bold mb-4">Contact Us</h1>
         <p className="text-gray-700 mb-4">

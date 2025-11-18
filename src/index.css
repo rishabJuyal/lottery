@@ -29,4 +29,17 @@
     --text-primary: #f3f4f6;      /* light text */
     --text-on-primary: #1e3a8a;   /* text on blue buttons */
   }
+  @keyframes pulse-scale {
+    0%, 100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.1); /* adjust max size */
+    }
+  }
+  
+  .animate-pulse-scale {
+    animation: pulse-scale 1s ease-in-out infinite;
+  }
+  
   

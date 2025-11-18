@@ -1,5 +1,5 @@
-import { Lock, User } from "lucide-react";
-import React, { useState } from "react";
+import { Lock, User, Shield } from "lucide-react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 
@@ -16,40 +16,56 @@ const LoginPage = () => {
     !!localStorage.getItem("rememberUserId")
   );
 
+  const [captcha, setCaptcha] = useState("");
+  const [inputCaptcha, setInputCaptcha] = useState("");
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // Generate simple captcha on mount
+  useEffect(() => {
+    generateCaptcha();
+  }, []);
+
+  const generateCaptcha = () => {
+    const random = Math.random().toString(36).substring(2, 7).toUpperCase();
+    setCaptcha(random);
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
     if (loading) return;
+
+    if (inputCaptcha !== captcha) {
+      setError("Captcha does not match");
+      generateCaptcha(); // regenerate captcha on failure
+      return;
+    }
+
     setLoading(true);
     setError("");
 
     try {
       const payload = {
-        userId: userId.toUpperCase(), // always uppercase
+        userId: userId.toUpperCase(),
         password,
       };
 
       const response = await api.post("/login/gamma/authenticate", payload);
-      
-      // The token is now in accessToken
+
       if (response && response.accessToken) {
         const userInfo = {
           userId: response.userId,
           displayName: response.displayName,
-          balance: response.balance || 0, // add balance if API provides
+          balance: response.balance || 0,
           accessToken: response.accessToken,
           refreshToken: response.refreshToken,
         };
-      
+
         localStorage.setItem("userInfo", JSON.stringify(userInfo));
-      
-        // existing token storage
         localStorage.setItem("authToken", response.accessToken);
         localStorage.setItem("refreshToken", response.refreshToken || "");
-      
-        // Remember credentials
+
         if (remember) {
           localStorage.setItem("rememberUserId", userId.toUpperCase());
           localStorage.setItem("rememberPassword", password);
@@ -57,13 +73,9 @@ const LoginPage = () => {
           localStorage.removeItem("rememberUserId");
           localStorage.removeItem("rememberPassword");
         }
-      
-        // Trigger Header to update immediately
-        window.dispatchEvent(new Event("storage"));
-      
-        navigate("/"); // redirect after login
 
-      
+        window.dispatchEvent(new Event("storage"));
+        navigate("/");
       } else {
         console.log("Login response:", response);
         setError("Invalid login response");
@@ -116,14 +128,70 @@ const LoginPage = () => {
             />
           </div>
 
-          <div className="text-left mb-2">
-            <button
-              type="button"
-              className="ml-2 text-[9px] font-bold text-[var(--color-primary)] hover:underline"
-            >
-              Forgot Your Password?
-            </button>
+          {/* Captcha Section */}
+          <div className="mb-3">
+            <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center gap-2">
+                <Shield className="text-gray-500 w-4 h-4" />
+                <span className="text-xs font-semibold text-gray-600">
+                  Enter Captcha:
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={generateCaptcha}
+                className="text-[10px] text-[var(--color-primary)] font-bold hover:underline"
+              >
+                Refresh
+              </button>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="bg-gray-200 text-gray-800 text-sm font-bold px-3 py-1.5 rounded-md select-none">
+                {captcha}
+              </div>
+              <input
+                type="text"
+                value={inputCaptcha}
+                onChange={(e) =>
+                  setInputCaptcha(e.target.value.toUpperCase())
+                }
+                placeholder="Enter Captcha"
+                className="bg-white w-full flex-1 rounded-full border-2 border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder-gray-400"
+                required
+              />
+            </div>
           </div>
+
+          {/* Remember Me with Tick */}
+          <label className="flex items-center mt-3 cursor-pointer select-none mb-2">
+            <input
+              type="checkbox"
+              id="remember"
+              className="hidden peer"
+              checked={remember}
+              onChange={(e) => setRemember(e.target.checked)}
+            />
+            <span className="w-5 h-5 border border-[var(--color-primary)] rounded-sm flex items-center justify-center peer-checked:bg-[var(--color-primary)] transition relative">
+              {remember && (
+                <svg
+                  className="w-3 h-3 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+              )}
+            </span>
+            <span className="ml-2 text-[var(--color-primary)] text-[9px] font-bold">
+              Remember My Login
+            </span>
+          </label>
 
           <button
             type="submit"
@@ -132,33 +200,7 @@ const LoginPage = () => {
           >
             {loading ? "Logging in..." : "LOGIN"}
           </button>
-
-          <label className="flex items-center mt-3 cursor-pointer">
-            <input
-              type="checkbox"
-              id="remember"
-              className="hidden peer"
-              checked={remember}
-              onChange={(e) => setRemember(e.target.checked)}
-            />
-            <span className="w-5 h-5 border border-[var(--color-primary)] rounded-sm flex items-center justify-center peer-checked:bg-blue-700 transition"></span>
-            <span className="ml-2 text-[var(--color-primary)] text-[9px] font-bold">
-              Remember My Login
-            </span>
-          </label>
         </form>
-
-        <div className="bg-[var(--color-primary)] text-white text-center py-4 pb-6 px-3 border-1 border-t-0 border-blue-300 rounded-b-lg">
-          <p className="text-[13px] font-semibold mb-2">
-            Haven’t Registered Yet?
-          </p>
-          <button
-            onClick={() => navigate("/register")}
-            className="bg-white w-full text-[#002C77] px-10 py-1.5 rounded-full font-bold text-sm hover:bg-gray-100 transition"
-          >
-            REGISTER
-          </button>
-        </div>
       </div>
     </div>
   );

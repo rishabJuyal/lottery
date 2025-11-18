@@ -92,66 +92,63 @@ const CheckMyTickets = () => {
 
   return (
     <div className="pb-4 min-h-screen">
-{/* HEADER: Price Tabs + Dropdown + Date Selector */}
-<div style={{ background: "var(--bg-gradient)" }} className="px-1 py-2 mb-4 space-y-2">
-
-  {/* First line: Prices + Status Dropdown */}
-  <div className="flex flex-wrap items-center gap-2">
-    <div className="flex gap-2 overflow-x-auto scrollbar-hide flex-1">
-      {prices.map((price) => (
-        <button
-          key={price}
-          onClick={() => setActivePrice(price)}
-          style={
-            activePrice === price
-              ? {
-                  background:
-                    "radial-gradient(circle at center, #ffef9a 0%, #ffdb58 50%, #f6c41c 100%)",
+      {/* HEADER: Price Tabs + Dropdown + Date Selector */}
+      <div style={{ background: "var(--bg-gradient)" }} className="px-1 py-2 mb-4 space-y-2">
+        {/* First line: Prices + Status Dropdown */}
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex gap-2 overflow-x-auto scrollbar-hide flex-1">
+            {prices.map((price) => (
+              <button
+                key={price}
+                onClick={() => setActivePrice(price)}
+                style={
+                  activePrice === price
+                    ? {
+                        background:
+                          "radial-gradient(circle at center, #ffef9a 0%, #ffdb58 50%, #f6c41c 100%)",
+                      }
+                    : {}
                 }
-              : {}
-          }
-          className={`px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition-all duration-200 ${
-            activePrice === price
-              ? "text-red-800 shadow-md scale-105"
-              : "bg-white text-gray-700 border border-yellow-300 hover:bg-green-50"
-          }`}
-        >
-          ₹{price}
-        </button>
-      ))}
-    </div>
+                className={`px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition-all duration-200 ${
+                  activePrice === price
+                    ? "text-red-800 shadow-md scale-105"
+                    : "bg-white text-gray-700 border border-yellow-300 hover:bg-green-50"
+                }`}
+              >
+                ₹{price}
+              </button>
+            ))}
+          </div>
 
-    <select
-      value={statusFilter}
-      onChange={(e) => setStatusFilter(e.target.value)}
-      className="text-xs border border-yellow-600 bg-white px-2 py-1 shadow-sm w-24"
-    >
-      {statusOptions.map((status) => (
-        <option key={status} value={status}>
-          {status.charAt(0).toUpperCase() + status.slice(1)}
-        </option>
-      ))}
-    </select>
-  </div>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="text-xs border border-yellow-600 bg-white px-2 py-1 shadow-sm w-24"
+          >
+            {statusOptions.map((status) => (
+              <option key={status} value={status}>
+                {status.charAt(0).toUpperCase() + status.slice(1)}
+              </option>
+            ))}
+          </select>
+        </div>
 
-  {/* Second line: Date Selector */}
-  <div className="mt-2 w-full">
-    <input
-      type="date"
-      value={(() => {
-        const [d, m, y] = selectedDate.split("/");
-        return `${y}-${m}-${d}`;
-      })()}
-      onChange={(e) => {
-        const [y, m, d] = e.target.value.split("-");
-        setSelectedDate(`${d}/${m}/${y}`);
-      }}
-      max={new Date().toISOString().split("T")[0]}
-      className="w-full text-xs font-medium border border-yellow-600 px-2 py-1.5 bg-white shadow-sm focus:outline-none focus:ring-1 focus:ring-orange-500 appearance-none"
-    />
-  </div>
-</div>
-
+        {/* Second line: Date Selector (No Limit) */}
+        <div className="mt-2 w-full">
+          <input
+            type="date"
+            value={(() => {
+              const [d, m, y] = selectedDate.split("/");
+              return `${y}-${m}-${d}`;
+            })()}
+            onChange={(e) => {
+              const [y, m, d] = e.target.value.split("-");
+              setSelectedDate(`${d}/${m}/${y}`);
+            }}
+            className="w-full text-xs font-medium border border-yellow-600 px-2 py-1.5 bg-white shadow-sm focus:outline-none focus:ring-1 focus:ring-orange-500 appearance-none"
+          />
+        </div>
+      </div>
 
       {/* Ticket List */}
       {loading ? (

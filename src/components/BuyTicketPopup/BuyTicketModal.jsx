@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from "react";
 import LotteryTicket from "./LotteryTicket";
 import DrawSelector from "./DrawSelector";
 import PurchaseResultModal from "./PurchaseResultModal";
-import api from "../../services/api"; // make sure your api instance is imported
+import ConfirmationModal from "./ConfirmationModal";
+import api from "../../services/api";
 
 const BuyTicketModal = ({
     isOpen,
@@ -10,11 +11,9 @@ const BuyTicketModal = ({
     price,
     ticket,
     purchasedTickets = [],
-    apiData, // API response
+    apiData,
 }) => {
-    /** ----------------------------------------------------------
-     *  Convert "22:00:00" → "10:00 PM"
-     * ---------------------------------------------------------- */
+
     const convertToAMPM = (time) => {
         if (!time) return "";
         const [h, m] = time.split(":");
@@ -25,9 +24,6 @@ const BuyTicketModal = ({
         return `${hour}:${m} ${modifier}`;
     };
 
-    /** ----------------------------------------------------------
-     *  Map full API response into usable structure
-     * ---------------------------------------------------------- */
     const drawTimes =
         apiData?.availableSlots?.map((slot) => ({
             label: convertToAMPM(slot.timeSlot),
@@ -42,21 +38,19 @@ const BuyTicketModal = ({
     const [tickets, setTickets] = useState([]);
     const [animateIn, setAnimateIn] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [purchasing, setPurchasing] = useState(false); // separate purchase loading
+    const [purchasing, setPurchasing] = useState(false);
     const [selectedDate, setSelectedDate] = useState("");
     const [selectedTime, setSelectedTime] = useState("");
     const [selectedPrice, setSelectedPrice] = useState(price);
-
     const [purchaseResult, setPurchaseResult] = useState({ isOpen: false, message: "" });
+    const [showConfirm, setShowConfirm] = useState(false);
 
     const debounceRef = useRef(null);
 
-    /** Auto animate */
     useEffect(() => {
         setAnimateIn(isOpen);
     }, [isOpen]);
 
-    /** DETECT SELECTED SLOT + SELECTED DENOMINATION */
     const selectedSlot = drawTimes.find((t) => t.value === selectedTime);
     const selectedDenominationObject = selectedSlot?.denominations?.find(
         (d) => d.denomination === selectedPrice
@@ -66,9 +60,55 @@ const BuyTicketModal = ({
         selectedDenominationObject?.maxTickets || 500,
         selectedDenominationObject?.availableTickets ?? 0
     );
+
     const isAvailable = selectedDenominationObject?.isAvailable ?? false;
 
-    /** Generate tickets whenever quantity or selection changes */
+    // ================= FIXED QUANTITY INPUT ===============
+
+    const handleTempChange = (e) => {
+        let val = e.target.value;
+
+        // Allow empty
+        if (val === "") {
+            setTempQuantity("");
+            return;
+        }
+
+        // Only digits
+        if (!/^\d+$/.test(val)) return;
+
+        let num = Number(val);
+
+        // Auto-clamp to max instantly
+        if (num > maxTickets) num = maxTickets;
+
+        setTempQuantity(num);
+        setQuantity(num);
+    };
+
+    const handleBlur = () => {
+        if (tempQuantity === "") {
+            setTempQuantity(1);
+            setQuantity(1);
+            return;
+        }
+
+        let num = Number(tempQuantity);
+        if (num < 1) num = 1;
+        if (num > maxTickets) num = maxTickets;
+
+        setTempQuantity(num);
+        setQuantity(num);
+    };
+
+    const adjustQuantity = (val) => {
+        const newVal = Math.max(1, Math.min(maxTickets, quantity + val));
+        setQuantity(newVal);
+        setTempQuantity(newVal);
+    };
+
+    // =======================================================
+
     useEffect(() => {
         if (!ticket) return;
         setLoading(true);
@@ -83,10 +123,13 @@ const BuyTicketModal = ({
                 if (!purchasedTickets.includes(startId.toString())) {
                     generated.push({
                         ...ticket,
-                        id: '??????',
+                        id: `*********`,
                         drawDate: selectedDate,
                         drawTime: selectedTime,
                         price: selectedPrice,
+                        drawDay: new Date(selectedDate).toLocaleDateString("en-US", {
+                            weekday: "long",
+                        }),
                     });
                 }
                 startId++;
@@ -96,41 +139,34 @@ const BuyTicketModal = ({
 
             setTickets(generated);
             setLoading(false);
-        }, 300);
+        }, 250);
     }, [quantity, ticket, purchasedTickets, selectedDate, selectedTime, selectedPrice]);
 
-    /** Default date & pre-select drawTime + price based on ticket */
+    // ========== FIXED: Only initialize ONCE on modal open ==========
+
     useEffect(() => {
         if (!isOpen || !ticket) return;
 
         const today = new Date().toISOString().split("T")[0];
         setSelectedDate(ticket.drawDate || today);
 
-        const defaultSlot = drawTimes.find(t => t.value === ticket.drawTime) || drawTimes[0];
+        const defaultSlot =
+            drawTimes.find((t) => t.value === ticket.drawTime) || drawTimes[0];
 
         if (defaultSlot) {
-            setSelectedTime(
-                ticket.drawTime && drawTimes.some(t => t.value === ticket.drawTime)
-                    ? ticket.drawTime
-                    : defaultSlot.value
-            );
+            setSelectedTime(defaultSlot.value);
 
-            const defaultPriceObj = defaultSlot.denominations.find(d => d.denomination === ticket.price) || defaultSlot.denominations[0];
-            setSelectedPrice(
-                ticket.price && defaultSlot.denominations.some(d => d.denomination === ticket.price)
-                    ? ticket.price
-                    : defaultPriceObj.denomination
-            );
+            const defaultPriceObj =
+                defaultSlot.denominations.find((d) => d.denomination === ticket.price) ||
+                defaultSlot.denominations[0];
+
+            setSelectedPrice(defaultPriceObj.denomination);
         }
+    }, [isOpen]);
 
-        setQuantity(1);
-        setTempQuantity(1);
-    }, [isOpen, apiData, ticket]);
+    // =============================================================
 
-    /** Handle Buy */
     const handleConfirm = async () => {
-        if (!selectedDate || !selectedTime || !selectedPrice || !quantity) return;
-
         try {
             setPurchasing(true);
 
@@ -143,19 +179,11 @@ const BuyTicketModal = ({
 
             const response = await api.post("/gamma/lottery/purchase", payload);
 
-            if (response) {
-                setPurchaseResult({
-                    isOpen: true,
-                    message: response.message || "Purchase successful!",
-                });
-            } else {
-                setPurchaseResult({
-                    isOpen: true,
-                    message: response.message || "Failed to purchase tickets.",
-                });
-            }
+            setPurchaseResult({
+                isOpen: true,
+                message: response?.message || "Purchase successful!",
+            });
         } catch (error) {
-            console.error("Purchase failed", error);
             setPurchaseResult({
                 isOpen: true,
                 message: "Purchase failed. Please try again.",
@@ -165,24 +193,8 @@ const BuyTicketModal = ({
         }
     };
 
-    /** Quantity controls */
-    const adjustQuantity = (val) => {
-        const newVal = Math.max(1, Math.min(maxTickets, quantity + val));
-        setQuantity(newVal);
-        setTempQuantity(newVal);
-    };
-
-    const handleBlur = () => {
-        let valid = parseInt(tempQuantity) || 1;
-        if (valid < 1) valid = 1;
-        if (valid > maxTickets) valid = maxTickets;
-        setTempQuantity(valid);
-        setQuantity(valid);
-    };
-
     if (!isOpen || !ticket) return null;
 
-    /** Purchase loading overlay */
     const PurchaseLoadingOverlay = () => (
         <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 flex flex-col items-center shadow-lg animate-pulse">
@@ -207,13 +219,12 @@ const BuyTicketModal = ({
                 >
                     {purchasing && <PurchaseLoadingOverlay />}
 
-                    {/* Header */}
                     <div
                         style={{ background: "var(--bg-gradient)" }}
                         className="p-3 text-center rounded-t-lg relative"
                     >
                         <h2 className="text-[15px] font-extrabold text-white">
-                            BUY TICKETS • ₹{selectedPrice} EACH
+                            BUY TICKETS - ₹{selectedPrice} EACH
                         </h2>
                         <button
                             onClick={onClose}
@@ -223,7 +234,6 @@ const BuyTicketModal = ({
                         </button>
                     </div>
 
-                    {/* Draw Selector */}
                     <DrawSelector
                         drawTimes={drawTimes}
                         selectedDate={selectedDate}
@@ -234,7 +244,6 @@ const BuyTicketModal = ({
                         onPriceChange={setSelectedPrice}
                     />
 
-                    {/* Tickets List */}
                     <div className="min-h-104 flex-1 overflow-x-auto flex gap-3 p-4 pb-40 snap-x snap-mandatory">
                         {loading ? (
                             <div className="flex w-full justify-center items-center text-gray-600 font-semibold text-sm">
@@ -247,7 +256,9 @@ const BuyTicketModal = ({
                                     <div className="mb-2 text-center text-sm text-gray-800 font-semibold bg-orange-200 py-1 px-2 shadow-inner">
                                         <span className="mr-2">🎟️ Ticket #{index + 1}</span>
                                         <span className="mx-1 text-orange-600 font-bold">₹{t.price}</span>
-                                        <span className="mx-1 text-gray-600">• Draw: {convertToAMPM(t.drawTime)}</span>
+                                        <span className="mx-1 text-gray-600">
+                                            • Draw: {convertToAMPM(t.drawTime)}
+                                        </span>
                                     </div>
                                     <LotteryTicket {...t} canPurchase={false} />
                                 </div>
@@ -255,89 +266,90 @@ const BuyTicketModal = ({
                         )}
                     </div>
 
-                    {/* Footer */}
                     <div
                         style={{ background: "var(--bg-gradient)" }}
                         className="absolute bottom-0 left-0 right-0 border-t p-4 py-8"
                     >
                         <div className="flex items-center justify-between gap-3 mb-3">
-                            {/* Quantity */}
                             <div className="flex items-center bg-[#fdf7ef] px-3 py-2 w-1/2 border shadow-inner">
                                 <span className="text-sm font-semibold text-gray-600 mr-2">🎟️</span>
+
                                 <input
-                                    type="number"
-                                    min="1"
-                                    max={maxTickets}
+                                    type="text"
                                     value={tempQuantity}
-                                    onChange={(e) => {
-                                        const val = e.target.value;
-                                        if (val === "" || /^\d+$/.test(val)) {
-                                            const num = val === "" ? "" : Math.min(Number(val), maxTickets);
-                                            setTempQuantity(num);
-                                            if (num !== "") setQuantity(num);
-                                        }
-                                    }}
+                                    onChange={handleTempChange}
                                     onBlur={handleBlur}
                                     className="bg-transparent text-gray-800 w-full text-center outline-none text-sm"
                                 />
                             </div>
 
-                            {/* Buy Button */}
                             <button
-                                onClick={handleConfirm}
+                                onClick={() => setShowConfirm(true)}
                                 disabled={!tempQuantity || !isAvailable || maxTickets === 0 || purchasing}
                                 className={`w-1/2 ${!tempQuantity || !isAvailable || maxTickets === 0 || purchasing
                                         ? "bg-orange-200 text-gray-700 cursor-not-allowed"
                                         : "bg-gradient-to-b from-[#ffed33] to-[#f46d04] text-[#3b2300]"
                                     } font-bold py-2 shadow-md border border-yellow-300 active:scale-95`}
-                                title={
-                                    !isAvailable
-                                        ? "Tickets not available for this price"
-                                        : maxTickets === 0
-                                            ? "No tickets available"
-                                            : ""
-                                }
                             >
-                                {purchasing ? "Purchasing..." : `BUY ₹${(tempQuantity || 0) * selectedPrice}`}
+                                {purchasing
+                                    ? "Purchasing..."
+                                    : `BUY ₹${(Number(tempQuantity) || 0) * selectedPrice}`}
                             </button>
                         </div>
 
-                        {/* Quick Select */}
                         <div className="flex justify-between text-xs text-gray-600 font-medium">
-                            {[{ label: "Min", value: 1 }, { label: "+25", value: 25 }, { label: "+50", value: 50 }, { label: "+100", value: 100 }, { label: "Max", value: maxTickets }]
-                                .map((btn, idx) => (
-                                    <button
-                                        key={idx}
-                                        onClick={() =>
-                                            btn.label === "Min"
-                                                ? (setQuantity(1), setTempQuantity(1))
-                                                : btn.label === "Max"
-                                                    ? (setQuantity(maxTickets), setTempQuantity(maxTickets))
-                                                    : adjustQuantity(btn.value)
-                                        }
-                                        disabled={!isAvailable || maxTickets === 0 || purchasing}
-                                        className={`flex-1 py-1 mx-1 border transition ${!isAvailable || maxTickets === 0 || purchasing
-                                                ? "bg-gray-200 text-gray-400 cursor-not-allowed border-gray-200"
-                                                : "bg-[#fdf7ef] hover:bg-[#f9edd8] border-gray-300"
-                                            }`}
-                                    >
-                                        {btn.label}
-                                    </button>
-                                ))}
+                            {[
+                                { label: "Min", value: 1 },
+                                { label: "+25", value: 25 },
+                                { label: "+50", value: 50 },
+                                { label: "+100", value: 100 },
+                                { label: "Max", value: maxTickets },
+                            ].map((btn, idx) => (
+                                <button
+                                    key={idx}
+                                    onClick={() =>
+                                        btn.label === "Min"
+                                            ? (setQuantity(1), setTempQuantity(1))
+                                            : btn.label === "Max"
+                                                ? (setQuantity(maxTickets), setTempQuantity(maxTickets))
+                                                : adjustQuantity(btn.value)
+                                    }
+                                    disabled={!isAvailable || maxTickets === 0 || purchasing}
+                                    className={`flex-1 py-1 mx-1 border transition ${!isAvailable || maxTickets === 0 || purchasing
+                                            ? "bg-gray-200 text-gray-400 cursor-not-allowed border-gray-200"
+                                            : "bg-[#fdf7ef] hover:bg-[#f9edd8] border-gray-300"
+                                        }`}
+                                >
+                                    {btn.label}
+                                </button>
+                            ))}
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* Purchase Result Modal */}
+            <ConfirmationModal
+                isOpen={showConfirm}
+                onClose={() => setShowConfirm(false)}
+                onConfirm={() => {
+                    setShowConfirm(false);
+                    handleConfirm();
+                }}
+                message={`Confirm purchase of ${tempQuantity} ticket(s) for ₹${tempQuantity * selectedPrice
+                    }?`}
+                confirmText="Yes, Buy"
+                cancelText="Cancel"
+            />
+
             <PurchaseResultModal
                 isOpen={purchaseResult.isOpen}
                 onClose={() => {
-                    setPurchaseResult({ isOpen: false, message: "" });
-                    onClose(); // close BuyTicketModal as well
+                    setPurchaseResult({ isOpen: false, message: "" }); // close result modal
+                    onClose(); // close BuyTicketModal
                 }}
                 message={purchaseResult.message}
             />
+
         </>
     );
 };

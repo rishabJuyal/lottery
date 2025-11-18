@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import api from "../services/api"; // assuming you have api instance like in CheckMyTickets
+import { Coins } from "lucide-react";
 
 const Header = ({ onToggleSidebar }) => {
   const [token, setToken] = useState(localStorage.getItem("authToken"));
@@ -38,7 +39,7 @@ const Header = ({ onToggleSidebar }) => {
   return (
     <header
       style={{ background: "var(--bg-gradient)" }}
-      className="fixed flex items-center justify-between w-full h-13 px-3 text-white z-50"
+      className="fixed flex items-center justify-between w-full h-13 px-2 text-white z-50"
     >
       <button
         onClick={onToggleSidebar}
@@ -57,8 +58,9 @@ const Header = ({ onToggleSidebar }) => {
       </div>
 
       {token ? (
-        <div className="flex items-center justify-center py-1 text-[14px] font-bold text-green-200 z-20">
-          ₹{balance.toLocaleString()}
+        <div className="flex items-center justify-center bg-white px-2 py-1 rounded-[2px] text-xs font-bold text-red-700 hover:underline hover:text-red-300 transition z-20">
+          <Coins className="w-3 h-3 text-amber-600 mr-1" /> {/* coin icon */}
+          {balance.toLocaleString()}
         </div>
       ) : (
         <Link

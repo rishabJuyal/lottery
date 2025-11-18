@@ -33,11 +33,11 @@ function App() {
   return (
     <Router>
       <Suspense
-        fallback={
-          <div className="flex items-center justify-center h-screen text-blue-700 text-lg font-semibold">
-            Loading...
-          </div>
-        }
+        // fallback={
+        //   // <div className="flex items-center justify-center h-screen text-blue-700 text-lg font-semibold">
+        //   //   Loading...
+        //   // </div>
+        // }
       >
         <Routes>
           {/* Public routes */}
@@ -51,8 +51,8 @@ function App() {
             <Route path="offers" element={<Offers />} />
             <Route path="claim-prize" element={<ClaimPrize />} />
             <Route path="responsible-gambling" element={<ResponsibleGambling />} />
-            <Route path="terms-and-conditions" element={<Terms />} />
-            <Route path="privacy-statement" element={<PrivacyPolicy />} />
+            <Route path="terms" element={<Terms />} />
+            <Route path="privacy" element={<PrivacyPolicy />} />
             <Route path="contact-us" element={<ContactUs />} />
             <Route path="result" element={<ResultPage />} />
 

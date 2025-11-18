@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 
 const DrawSelector = ({
-    drawTimes, // FULL slot list from API
+    drawTimes,
     selectedDate,
     selectedTime,
     selectedPrice,
@@ -12,22 +12,26 @@ const DrawSelector = ({
     const today = new Date().toISOString().split("T")[0];
     const [availableTimes, setAvailableTimes] = useState([]);
 
-    /** Filter times based on today’s date */
+    /** Helper: convert "HH:MM" to minutes for sorting */
+    const toMinutes = (t) => {
+        const [h, m] = t.value.split(":").map(Number);
+        return h * 60 + m;
+    };
+
+    /** Filter & sort times based on selected date */
     useEffect(() => {
         const now = new Date();
         const currentMinutes = now.getHours() * 60 + now.getMinutes();
 
-        const toMins = (t) => {
-            const [h, m] = t.value.split(":").map(Number);
-            return h * 60 + m;
-        };
-
-        const filtered =
+        let filtered =
             selectedDate !== today
                 ? drawTimes
-                : drawTimes.filter((slot) => toMins(slot) > currentMinutes);
+                : drawTimes.filter((slot) => toMinutes(slot) > currentMinutes);
 
-        setAvailableTimes(filtered.length ? filtered : drawTimes);
+        // Sort by time
+        filtered.sort((a, b) => toMinutes(a) - toMinutes(b));
+
+        setAvailableTimes(filtered.length ? filtered : drawTimes.sort((a, b) => toMinutes(a) - toMinutes(b)));
     }, [selectedDate, drawTimes]);
 
     /** Denominations for selected time */

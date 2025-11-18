@@ -70,7 +70,7 @@ const Home = () => {
     if (!slot) return [];
 
     return slot.availableDenominations.map((d) => ({
-      id: generateID(),
+      id: '********',
       drawNumber: slot.slotCode,
       price: d.denomination,
       prizeValue: d.prizePool,

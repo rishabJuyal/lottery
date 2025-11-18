@@ -1,5 +1,5 @@
 // 📁 components/LotteryTicket.jsx
-import React from "react";
+import React, { useEffect, useState } from "react";
 import mrp from "../../assets/mrp.png";
 import m from "../../assets/m.png";
 import logo from "../../assets/lottery-logo.png";
@@ -16,10 +16,74 @@ const LotteryTicket = ({
   loss = false,
   pending = false,
   unclaimed = false,
-  canPurchase =false,
+  canPurchase = false,
   loading,
   onBuyClick, // 👈 parent will handle modal
 }) => {
+  const [timeLeft, setTimeLeft] = useState("");
+
+  // Split after first letter (A-Z or a-z)
+  const firstCharIndex = id.search(/[A-Za-z]/);
+  let prefix = "";
+  let suffix = "";
+  
+  if (firstCharIndex !== -1) {
+    prefix = id.slice(0, firstCharIndex + 1);
+    suffix = id.slice(firstCharIndex + 1);
+  } else {
+    // fallback: treat first half as prefix, second half as suffix
+    const mid = Math.ceil(3);
+    prefix = id.slice(0, mid);
+    suffix = id.slice(mid);
+  }
+  
+  useEffect(() => {
+    if (!pending) return;
+
+    // Split by '/' instead of '-'
+    const [day, month, year] = drawDate.split("/").map(Number);
+
+    // drawTime is like "22:00 PM"
+    let [hoursStr, minutesAndPeriod] = drawTime.split(":");
+    let hours = Number(hoursStr);
+
+    // minutesAndPeriod is "00 PM"
+    let [minutesStr, period] = minutesAndPeriod.split(" ");
+    let minutes = Number(minutesStr);
+    period = period ? period.toUpperCase() : "AM";
+
+    // If hour is <= 12, then apply AM/PM conversion
+    if (hours <= 12) {
+      if (period === "PM" && hours !== 12) hours += 12;
+      if (period === "AM" && hours === 12) hours = 0;
+    }
+    // If hour > 12, we treat it as 24h and ignore AM/PM because it's invalid otherwise
+
+    const target = new Date(year, month - 1, day, hours, minutes, 0);
+
+    const interval = setInterval(() => {
+      const now = new Date();
+      const diff = target - now;
+
+      if (diff <= 0) {
+        setTimeLeft("PENDING...");
+        clearInterval(interval);
+      } else {
+        const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const h = Math.floor((diff / (1000 * 60 * 60)) % 24);
+        const m = Math.floor((diff / 1000 / 60) % 60);
+        const s = Math.floor((diff / 1000) % 60);
+        setTimeLeft(
+          `${d}:${h.toString().padStart(2, "0")}:${m
+            .toString()
+            .padStart(2, "0")}:${s.toString().padStart(2, "0")}`
+        );
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [drawDate, drawTime, pending]);
+
   return (
     <div
       className="relative min-h-54 flex flex-row flex-nowrap justify-between w-[320px] min-w-[320px] shadow-lg border-y-[18px] border-[#307432] overflow-hidden"
@@ -72,9 +136,6 @@ const LotteryTicket = ({
               >
                 {prizeValue}
               </span>
-              {/* <span className="text-[20px] font-bold text-gray-800 ml-[2px]">
-                x20
-              </span> */}
             </div>
             <div className="text-[10px] font-bold text-gray-800">
               {drawNumber}th Draw On {drawDate}
@@ -96,8 +157,8 @@ const LotteryTicket = ({
               ABCD EFGH IJKL MNOP QRST ABCD EFGH IJKL MNOP QRST ABCD EFGH IJKL MNOP QRST
             </div>
             <div className="relative z-10 text-[22px] font-extrabold tracking-wider text-gray-900 text-nowrap">
-              <span className="font-sans text-gray-900">70A</span>{" "}
-              <span className="font-mono text-gray-900">{id}</span>
+              <span className="font-sans text-gray-900">{prefix}</span>{" "}
+              <span className="font-mono text-gray-900">{suffix}</span>
             </div>
           </div>
         </div>
@@ -113,7 +174,7 @@ const LotteryTicket = ({
 
           <div className="relative flex flex-col items-end w-full -mb-3">
             <div className="text-[10px] font-bold text-gray-700 leading-tight">
-              {drawTime} {canPurchase? 'ONWARDS': ""}
+              {drawTime} {canPurchase ? "ONWARDS" : ""}
             </div>
             <div className="text-[11px] font-bold text-purple-800 leading-tight">
               {drawDay}
@@ -145,25 +206,33 @@ const LotteryTicket = ({
             </div>
           </div>
 
-          {/* Buy Button */}
-          {/* Action Button (BUY / CLAIM / STATUS) */}
+          {/* Buy / Countdown Button */}
           <div className="absolute bottom-4 right-2 w-13">
             <div className="flex flex-col text-[10px] font-bold gap-2 mt-2">
               {won ? (
-                <span className="bg-green-700 text-white text-center py-2 rounded">WON</span>
+                <span className="bg-green-700 text-white text-center py-2 rounded">
+                  WON
+                </span>
               ) : loss ? (
-                <span className="bg-red-600 text-white text-center py-2 rounded">LOST</span>
+                <span className="bg-red-600 text-white text-center py-2 rounded">
+                  LOST
+                </span>
               ) : pending ? (
-                <span className="bg-yellow-400 text-gray-900 text-center py-2 rounded">PENDING</span>
+                <span className="text-red-800 text-center py-2 rounded">
+                  {timeLeft}
+                </span>
               ) : unclaimed ? (
                 <button
                   onClick={() =>
                     onBuyClick?.({ id, price, prizeValue, drawDate, drawTime, drawDay })
                   }
-                  className="bg-blue-600 hover:bg-blue-700 text-white py-2 rounded"
+                  className="bg-yellow-400 hover:bg-yellow-600 text-gray-900 py-2 rounded-2xl shadow-lg
+             transition-transform transform hover:scale-105 
+             animate-pulse-scale"
                 >
                   CLAIM
                 </button>
+
               ) : canPurchase ? (
                 <button
                   onClick={() =>
@@ -200,8 +269,8 @@ const LotteryTicket = ({
               ABCD EFGH IJKL MNOP QRST ABCD EFGH IJKL MNOP QRST ABCD EFGH IJKL MNOP QRST
             </div>
             <div className="relative z-10 text-[22px] font-extrabold tracking-wider text-gray-900">
-              <span className="font-sans text-gray-900">70A</span>{" "}
-              <span className="font-mono text-gray-900">{id}</span>
+              <span className="font-sans text-gray-900">{prefix}</span>{" "}
+              <span className="font-mono text-gray-900">{suffix}</span>
             </div>
           </div>
         </div>
