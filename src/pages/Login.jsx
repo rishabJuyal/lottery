@@ -89,12 +89,12 @@ const LoginPage = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[var(--color-primary-light)] relative px-7">
-      <button
+      {/* <button
         onClick={() => navigate("/")}
         className="absolute top-3 right-3 text-white text-[50px] font-light leading-none hover:text-gray-300 transition"
       >
         ×
-      </button>
+      </button> */}
 
       <div className="bg-[var(--bg-secondary)] w-full max-w-70 rounded-lg shadow-lg overflow-hidden">
         <form onSubmit={handleLogin} className="mt-10 px-3 pb-6">
