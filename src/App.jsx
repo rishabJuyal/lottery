@@ -6,7 +6,6 @@ import Layout from "./layouts/Layout";
 
 // Lazy-loaded pages
 const Home = lazy(() => import("./pages/Home"));
-const About = lazy(() => import("./pages/About"));
 const Contact = lazy(() => import("./pages/ContactUs"));
 const BuyTicketPage = lazy(() => import("./components/BuyTicketPopup/BuyTicketPage"));
 const DrawGames = lazy(() => import("./pages/DrawGames"));
