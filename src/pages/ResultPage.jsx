@@ -77,7 +77,7 @@ const ResultPage = () => {
             {/* Price Tabs + Date Selector (in one line) */}
             {/* Tabs & Date Selector */}
             <div
-                style={{ background: "linear-gradient(to right, #4880EC, #019CAD)" }}
+                style={{ background: "var(--bg-gradient)" }}
                 className="flex items-center justify-between px-1 py-2 mb-4">
                 {/* Price Tabs */}
                 <div className="flex gap-2 scrollbar-hide">

@@ -140,7 +140,7 @@ const LoginPage = () => {
               <button
                 type="button"
                 onClick={generateCaptcha}
-                className="text-[10px] text-[var(--color-primary)] font-bold hover:underline"
+                className="text-[10px] text-[var(--color-primary)] font-bold hover:underline mr-2"
               >
                 Refresh
               </button>
@@ -171,7 +171,7 @@ const LoginPage = () => {
               checked={remember}
               onChange={(e) => setRemember(e.target.checked)}
             />
-            <span className="w-5 h-5 border border-[var(--color-primary)] rounded-sm flex items-center justify-center peer-checked:bg-[var(--color-primary)] transition relative">
+            <span className="w-4 h-4 border border-[var(--color-primary)] rounded-sm flex items-center justify-center peer-checked:bg-[var(--color-primary)] transition relative">
               {remember && (
                 <svg
                   className="w-3 h-3 text-white"
@@ -188,9 +188,9 @@ const LoginPage = () => {
                 </svg>
               )}
             </span>
-            <span className="ml-2 text-[var(--color-primary)] text-[9px] font-bold">
-              Remember My Login
-            </span>
+            <div className="flex items-center mt-0.5 ml-2 text-[var(--color-primary)] text-[9px] font-bold ">
+              Remember Me
+            </div>
           </label>
 
           <button
