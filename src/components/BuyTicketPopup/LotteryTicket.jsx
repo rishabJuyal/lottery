@@ -18,46 +18,54 @@ const LotteryTicket = ({
   unclaimed = false,
   canPurchase = false,
   loading,
-  onBuyClick, // 👈 parent will handle modal
+  onBuyClick, // parent will handle modal
 }) => {
   const [timeLeft, setTimeLeft] = useState("");
+
+  // ⭐ NEW - whole ticket BUY click
+  const handleWholeClick = () => {
+    if (!canPurchase || loading || won || loss || pending || unclaimed) return;
+
+    onBuyClick?.({
+      id,
+      price,
+      prizeValue,
+      drawDate,
+      drawTime,
+      drawDay,
+    });
+  };
 
   // Split after first letter (A-Z or a-z)
   const firstCharIndex = id.search(/[A-Za-z]/);
   let prefix = "";
   let suffix = "";
-  
+
   if (firstCharIndex !== -1) {
     prefix = id.slice(0, firstCharIndex + 1);
     suffix = id.slice(firstCharIndex + 1);
   } else {
-    // fallback: treat first half as prefix, second half as suffix
     const mid = Math.ceil(3);
     prefix = id.slice(0, mid);
     suffix = id.slice(mid);
   }
-  
+
   useEffect(() => {
     if (!pending) return;
 
-    // Split by '/' instead of '-'
     const [day, month, year] = drawDate.split("/").map(Number);
 
-    // drawTime is like "22:00 PM"
     let [hoursStr, minutesAndPeriod] = drawTime.split(":");
     let hours = Number(hoursStr);
 
-    // minutesAndPeriod is "00 PM"
     let [minutesStr, period] = minutesAndPeriod.split(" ");
     let minutes = Number(minutesStr);
     period = period ? period.toUpperCase() : "AM";
 
-    // If hour is <= 12, then apply AM/PM conversion
     if (hours <= 12) {
       if (period === "PM" && hours !== 12) hours += 12;
       if (period === "AM" && hours === 12) hours = 0;
     }
-    // If hour > 12, we treat it as 24h and ignore AM/PM because it's invalid otherwise
 
     const target = new Date(year, month - 1, day, hours, minutes, 0);
 
@@ -73,11 +81,15 @@ const LotteryTicket = ({
         const h = Math.floor((diff / (1000 * 60 * 60)) % 24);
         const m = Math.floor((diff / 1000 / 60) % 60);
         const s = Math.floor((diff / 1000) % 60);
-        setTimeLeft(
-          `${d}:${h.toString().padStart(2, "0")}:${m
-            .toString()
-            .padStart(2, "0")}:${s.toString().padStart(2, "0")}`
-        );
+
+        let parts = [];
+        if (d > 0) parts.push(d);
+        if (h > 0 || parts.length > 0)
+          parts.push(h.toString().padStart(2, "0"));
+        parts.push(m.toString().padStart(2, "0"));
+        parts.push(s.toString().padStart(2, "0"));
+
+        setTimeLeft(parts.join(":"));
       }
     }, 1000);
 
@@ -87,7 +99,7 @@ const LotteryTicket = ({
   return (
     <div
       className="relative min-h-54 flex flex-row flex-nowrap justify-between w-[320px] min-w-[320px] shadow-lg border-y-[18px] border-[#307432] overflow-hidden"
-      onClick={(e) => e.stopPropagation()}
+      onClick={handleWholeClick} // ⭐ NEW — whole ticket click
     >
       {/* Left strip */}
       <div className="bg-[#a43333] w-[8%]"></div>
@@ -97,8 +109,7 @@ const LotteryTicket = ({
         <div
           className="absolute left-4 top-4 w-[85%] h-[85%] m-auto rounded-full opacity-50"
           style={{
-            background:
-              "radial-gradient(circle at top left, white 0%, pink 100%)",
+            background: "radial-gradient(circle at top left, white 0%, pink 100%)",
           }}
         ></div>
 
@@ -223,26 +234,42 @@ const LotteryTicket = ({
                 </span>
               ) : unclaimed ? (
                 <button
-                  onClick={() =>
-                    onBuyClick?.({ id, price, prizeValue, drawDate, drawTime, drawDay })
-                  }
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onBuyClick?.({
+                      id,
+                      price,
+                      prizeValue,
+                      drawDate,
+                      drawTime,
+                      drawDay,
+                    });
+                  }}
                   className="bg-yellow-400 hover:bg-yellow-600 text-gray-900 py-2 rounded-2xl shadow-lg
              transition-transform transform hover:scale-105 
              animate-pulse-scale"
                 >
                   CLAIM
                 </button>
-
               ) : canPurchase ? (
                 <button
-                  onClick={() =>
-                    onBuyClick?.({ id, price, prizeValue, drawDate, drawTime, drawDay })
-                  }
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onBuyClick?.({
+                      id,
+                      price,
+                      prizeValue,
+                      drawDate,
+                      drawTime,
+                      drawDay,
+                    });
+                  }}
                   disabled={loading}
-                  className={`${loading
+                  className={`${
+                    loading
                       ? "bg-gray-400 cursor-not-allowed"
                       : "bg-green-600 hover:bg-green-700"
-                    } text-white py-2 rounded disabled:opacity-50`}
+                  } text-white py-2 rounded disabled:opacity-50`}
                 >
                   {loading ? "PROCESSING..." : "BUY"}
                 </button>

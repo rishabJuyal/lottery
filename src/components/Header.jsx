@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import api from "../services/api"; // assuming you have api instance like in CheckMyTickets
 import { Coins } from "lucide-react";
+import logo from '../assets/logo1.png'
 
 const Header = ({ onToggleSidebar }) => {
   const [token, setToken] = useState(localStorage.getItem("authToken"));
@@ -51,9 +52,12 @@ const Header = ({ onToggleSidebar }) => {
       <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10">
         <Link
           to="/"
-          className="text-xl font-bold hover:underline hover:text-gray-200 transition"
         >
-          DEAR LOTTERY
+          <img
+            src={logo} // Replace with your image path
+            alt="Dear Lottery"
+            className="h-11 w-auto object-contain"
+          />
         </Link>
       </div>
 

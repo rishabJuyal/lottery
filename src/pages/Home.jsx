@@ -8,6 +8,8 @@ import api from "../services/api";
 import ScratchCard1 from "../assets/scratch-card-1.png";
 import ScratchCard2 from "../assets/scratch-card-2.png";
 import ScratchCard3 from "../assets/scratch-card-3.png";
+import FloatingResultButton from "../components/FloatingResultButton";
+import ResultModal from "../components/ResultModal";
 
 const scratchTicketsData = [
   { id: "#2671", price: "$20", imageUrl: ScratchCard1, startDate: "10/20/25" },
@@ -25,6 +27,9 @@ const Home = () => {
   const [purchasedTickets, setPurchasedTickets] = useState([]);
 
   const [countdown, setCountdown] = useState("");
+
+  const [isResultOpen, setIsResultOpen] = useState(false);
+
 
   // Ref to avoid unnecessary rerenders
   const nearestSlotRef = useRef(null);
@@ -166,31 +171,31 @@ const Home = () => {
       <img src={poster} className="w-full h-auto mb-4" alt="Poster" />
 
       <div className="p-3 space-y-2">
-      <section>
-  <h2 className="font-bold text-[14px] mb-2 flex items-center justify-between">
-    <span>
-      DRAW GAMES ({nearestSlotName || (loading ? "Loading..." : "No Slots")})
-    </span>
-    {countdown && (
-      <span className="text-amber-800 text-lg text-nowrap font-semibold ml-2">
-        ⏳ {countdown}
-      </span>
-    )}
-  </h2>
+        <section>
+          <h2 className="font-bold text-[14px] mb-2 flex items-center justify-between">
+            <span>
+              DRAW GAMES ({nearestSlotName || (loading ? "Loading..." : "No Slots")})
+            </span>
+            {countdown && (
+              <span className="text-amber-800 text-lg text-nowrap font-semibold ml-2">
+                ⏳ {countdown}
+              </span>
+            )}
+          </h2>
 
-  <div className="flex space-x-3 overflow-x-auto p-4 pt-1 -mx-3">
-    {tickets.map((ticket) => (
-      <LotteryTicket
-        key={ticket.id}
-        {...ticket}
-        canPurchase={true}
-        loading={loading}
-        onBuyClick={() => handleBuyClick(ticket)}
-      />
-    ))}
-    {!loading && tickets.length === 0 && <div>No tickets available</div>}
-  </div>
-</section>
+          <div className="flex space-x-3 overflow-x-auto p-4 pt-1 -mx-3">
+            {tickets.map((ticket) => (
+              <LotteryTicket
+                key={ticket.id}
+                {...ticket}
+                canPurchase={true}
+                loading={loading}
+                onBuyClick={() => handleBuyClick(ticket)}
+              />
+            ))}
+            {!loading && tickets.length === 0 && <div>No tickets available</div>}
+          </div>
+        </section>
 
 
         <section>
@@ -216,7 +221,11 @@ const Home = () => {
       )}
 
       {error && <div className="text-red-500 p-3">{error}</div>}
-    </div>
+     {/* Floating Result Button */}
+<FloatingResultButton onClick={() => setIsResultOpen(true)} />
+
+{/* Result Modal */}
+<ResultModal isOpen={isResultOpen} onClose={() => setIsResultOpen(false)} />    </div>
   );
 };
 

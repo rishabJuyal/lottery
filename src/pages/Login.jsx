@@ -17,19 +17,69 @@ const LoginPage = () => {
   );
 
   const [captcha, setCaptcha] = useState("");
+  const [captchaSvg, setCaptchaSvg] = useState(""); // messy captcha image
   const [inputCaptcha, setInputCaptcha] = useState("");
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Generate simple captcha on mount
+  // Generate captcha on mount
   useEffect(() => {
     generateCaptcha();
   }, []);
 
+  // Generate messy numeric captcha
   const generateCaptcha = () => {
-    const random = Math.random().toString(36).substring(2, 7).toUpperCase();
-    setCaptcha(random);
+    const raw = Math.floor(10000 + Math.random() * 90000).toString();
+    setCaptcha(raw);
+
+    const chars = raw.split("");
+
+    const svg = `
+      <svg width="120" height="40" xmlns="http://www.w3.org/2000/svg">
+        <rect width="120" height="40" fill="#e5e7eb" />
+
+        ${chars
+          .map((char, i) => {
+            const x = 10 + i * 20 + Math.random() * 4 - 2;
+            const y = 25 + Math.random() * 6 - 3;
+            const rotate = Math.random() * 30 - 15;
+
+            return `
+              <text 
+                x="${x}" 
+                y="${y}" 
+                font-size="20"
+                font-weight="${Math.random() > 0.5 ? "bold" : "normal"}"
+                fill="#1f2937"
+                transform="rotate(${rotate}, ${x}, ${y})"
+              >
+                ${char}
+              </text>
+            `;
+          })
+          .join("")}
+
+        ${Array.from({ length: 6 })
+          .map(() => {
+            const x1 = Math.random() * 120;
+            const y1 = Math.random() * 40;
+            const x2 = Math.random() * 120;
+            const y2 = Math.random() * 40;
+            return `
+            <line 
+              x1="${x1}" y1="${y1}" 
+              x2="${x2}" y2="${y2}" 
+              stroke="#9ca3af" 
+              stroke-width="1" 
+              stroke-opacity="0.4"
+            />`;
+          })
+          .join("")}
+      </svg>
+    `;
+
+    setCaptchaSvg(`data:image/svg+xml;base64,${btoa(svg)}`);
   };
 
   const handleLogin = async (e) => {
@@ -38,7 +88,7 @@ const LoginPage = () => {
 
     if (inputCaptcha !== captcha) {
       setError("Captcha does not match");
-      generateCaptcha(); // regenerate captcha on failure
+      generateCaptcha();
       return;
     }
 
@@ -89,13 +139,6 @@ const LoginPage = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[var(--color-primary-light)] relative px-7">
-      {/* <button
-        onClick={() => navigate("/")}
-        className="absolute top-3 right-3 text-white text-[50px] font-light leading-none hover:text-gray-300 transition"
-      >
-        ×
-      </button> */}
-
       <div className="bg-[var(--bg-secondary)] w-full max-w-70 rounded-lg shadow-lg overflow-hidden">
         <form onSubmit={handleLogin} className="mt-10 px-3 pb-6">
           {error && (
@@ -145,16 +188,19 @@ const LoginPage = () => {
                 Refresh
               </button>
             </div>
+
             <div className="flex items-center gap-2">
-              <div className="bg-gray-200 text-gray-800 text-sm font-bold px-3 py-1.5 rounded-md select-none">
-                {captcha}
-              </div>
+              <img
+                src={captchaSvg}
+                alt="captcha"
+                className="w-28 h-10 rounded bg-gray-200"
+                draggable="false"
+              />
+
               <input
                 type="text"
                 value={inputCaptcha}
-                onChange={(e) =>
-                  setInputCaptcha(e.target.value.toUpperCase())
-                }
+                onChange={(e) => setInputCaptcha(e.target.value)}
                 placeholder="Enter Captcha"
                 className="bg-white w-full flex-1 rounded-full border-2 border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder-gray-400"
                 required
@@ -162,7 +208,7 @@ const LoginPage = () => {
             </div>
           </div>
 
-          {/* Remember Me with Tick */}
+          {/* Remember Me */}
           <label className="flex items-center mt-3 cursor-pointer select-none mb-2">
             <input
               type="checkbox"

@@ -14,7 +14,7 @@ const CheckMyTickets = () => {
 
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [activePrice, setActivePrice] = useState(""); // will be set dynamically
+  const [activePrice, setActivePrice] = useState("");
   const [selectedDate, setSelectedDate] = useState(todayStr);
   const [statusFilter, setStatusFilter] = useState("all");
 
@@ -24,7 +24,16 @@ const CheckMyTickets = () => {
     return new Date(year, month - 1, day, hours, minutes, seconds);
   };
 
-  // Fetch tickets from API
+  // Convert 24h time to 12h AM/PM
+  const formatTime12Hour = (time24) => {
+    const [hourStr, min] = time24.split(":");
+    let hour = parseInt(hourStr, 10);
+    const ampm = hour >= 12 ? "PM" : "AM";
+    hour = hour % 12 || 12; // convert 0 → 12
+    return `${hour}:${min} ${ampm}`;
+  };
+
+  // Fetch tickets
   useEffect(() => {
     const fetchTickets = async () => {
       try {
@@ -40,8 +49,8 @@ const CheckMyTickets = () => {
           drawNumber: t.slotCode,
           price: t.denomination,
           prizeValue: t.prizePool || 100000,
-          drawDate: t.lotteryDate.split("-").reverse().join("/"), // DD/MM/YYYY
-          drawTime: t.timeSlot.slice(0, 5) + " PM", // simple conversion
+          drawDate: t.lotteryDate.split("-").reverse().join("/"),
+          drawTime: formatTime12Hour(t.timeSlot.slice(0, 5)), // FIXED
           won: t.status === "CLAIMED",
           loss: t.status === "EXPIRED",
           pending: t.status === "ACTIVE",
@@ -50,11 +59,12 @@ const CheckMyTickets = () => {
 
         setTickets(mappedTickets);
 
-        // Dynamically set unique prices from tickets
-        const uniquePrices = [...new Set(mappedTickets.map((t) => t.price.toString()))].sort(
-          (a, b) => a - b
-        );
-        setActivePrice(uniquePrices[0] || ""); // set first price as default
+        const uniquePrices = [
+          "all",
+          ...new Set(mappedTickets.map((t) => t.price.toString())),
+        ].sort((a, b) => (a === "all" ? -1 : Number(a) - Number(b)));
+
+        setActivePrice(uniquePrices[0] || "all");
       } catch (err) {
         console.error("Failed to fetch tickets", err);
       } finally {
@@ -69,7 +79,8 @@ const CheckMyTickets = () => {
   const sortedTickets =
     tickets
       ?.filter((ticket) => {
-        if (ticket.price.toString() !== activePrice) return false;
+        if (activePrice !== "all" && ticket.price.toString() !== activePrice)
+          return false;
         if (ticket.drawDate !== selectedDate) return false;
 
         if (statusFilter === "won" && !ticket.won) return false;
@@ -85,55 +96,66 @@ const CheckMyTickets = () => {
           parseDateTime(a.drawDate.split("/").reverse().join("-"), a.drawTime)
       ) || [];
 
-  // Compute unique prices from tickets for rendering tabs
   const prices = useMemo(() => {
-    return [...new Set(tickets.map((t) => t.price.toString()))].sort((a, b) => a - b);
+    const unique = [...new Set(tickets.map((t) => t.price.toString()))].sort(
+      (a, b) => Number(a) - Number(b)
+    );
+    return ["all", ...unique];
   }, [tickets]);
+
+  // Gradient style for dropdown wrapper
+  const gradient = {
+    background:
+      "radial-gradient(circle at center, #ffef9a 0%, #ffdb58 50%, #f6c41c 100%)",
+  };
 
   return (
     <div className="pb-4 min-h-screen">
-      {/* HEADER: Price Tabs + Dropdown + Date Selector */}
       <div style={{ background: "var(--bg-gradient)" }} className="px-1 py-2 mb-4 space-y-2">
-        {/* First line: Prices + Status Dropdown */}
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="flex gap-2 overflow-x-auto scrollbar-hide flex-1">
-            {prices.map((price) => (
-              <button
-                key={price}
-                onClick={() => setActivePrice(price)}
-                style={
-                  activePrice === price
-                    ? {
-                        background:
-                          "radial-gradient(circle at center, #ffef9a 0%, #ffdb58 50%, #f6c41c 100%)",
-                      }
-                    : {}
-                }
-                className={`px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition-all duration-200 ${
-                  activePrice === price
-                    ? "text-red-800 shadow-md scale-105"
-                    : "bg-white text-gray-700 border border-yellow-300 hover:bg-green-50"
-                }`}
+
+        {/* Price + Status */}
+        <div className="flex items-center gap-3">
+
+          {/* PRICE DROPDOWN */}
+          <div className="flex flex-col w-1/2">
+            <label className="text-[12px] font-bold text-gray-100">PRICE :</label>
+
+            <div className="rounded border border-yellow-600 shadow-sm" style={gradient}>
+              <select
+                value={activePrice}
+                onChange={(e) => setActivePrice(e.target.value)}
+                className="w-full text-xs px-2 py-1 bg-transparent text-red-800 font-semibold"
               >
-                ₹{price}
-              </button>
-            ))}
+                {prices.map((price) => (
+                  <option key={price} value={price} className="text-black">
+                    {price === "all" ? "All" : `₹${price}`}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="text-xs border border-yellow-600 bg-white px-2 py-1 shadow-sm w-24"
-          >
-            {statusOptions.map((status) => (
-              <option key={status} value={status}>
-                {status.charAt(0).toUpperCase() + status.slice(1)}
-              </option>
-            ))}
-          </select>
+          {/* STATUS DROPDOWN */}
+          <div className="flex flex-col w-1/2">
+            <label className="text-[12px] font-bold text-gray-100">STATUS :</label>
+
+            <div className="rounded border border-yellow-600 shadow-sm" style={gradient}>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="w-full text-xs px-2 py-1 bg-transparent text-red-800 font-semibold"
+              >
+                {statusOptions.map((status) => (
+                  <option key={status} value={status} className="text-black">
+                    {status.charAt(0).toUpperCase() + status.slice(1)}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
         </div>
 
-        {/* Second line: Date Selector (No Limit) */}
+        {/* Date Selector */}
         <div className="mt-2 w-full">
           <input
             type="date"
