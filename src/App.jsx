@@ -30,6 +30,8 @@ const ProtectedRoute = ({ children }) => {
 
 function App() {
   return (
+    <div className="w-full max-w-md mx-auto">
+
     <Router>
       <Suspense
         // fallback={
@@ -117,6 +119,8 @@ function App() {
         </Routes>
       </Suspense>
     </Router>
+    
+    </div>
   );
 }
 

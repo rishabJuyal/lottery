@@ -8,7 +8,7 @@ const BottomNav = () => {
 
   return (
     <footer
-      className="fixed bottom-0 left-0 right-0 flex justify-around p-1 gap-5 z-30 border-t border-[var(--color-primary-dark)]"
+      className="w-full max-w-md mx-auto fixed bottom-0 left-0 right-0 flex justify-around p-1 gap-5 z-30 border-t border-[var(--color-primary-dark)]"
       style={{
         background: "linear-gradient(to bottom, #a20604, #e63820)", // 🔥 red gradient
         color: "white",

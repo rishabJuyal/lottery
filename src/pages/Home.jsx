@@ -27,55 +27,45 @@ const Home = () => {
   const [purchasedTickets, setPurchasedTickets] = useState([]);
 
   const [countdown, setCountdown] = useState("");
-
   const [isResultOpen, setIsResultOpen] = useState(false);
 
-
-  // Ref to avoid unnecessary rerenders
   const nearestSlotRef = useRef(null);
 
-  // Convert 24h → AM/PM
   const toAMPM = (time) => {
     const [h, m] = time.split(":").map(Number);
     const ampm = h >= 12 ? "PM" : "AM";
-    const hour12 = h % 12 || 12;
-    return `${hour12}:${m.toString().padStart(2, "0")} ${ampm}`;
+    return `${h % 12 || 12}:${String(m).padStart(2, "0")} ${ampm}`;
   };
-
-  const generateID = () =>
-    Math.floor(10000 + Math.random() * 90000).toString();
 
   const getNearestSlot = (slots, selectedDate) => {
     if (!slots) return null;
 
-    const [year, month, day] = selectedDate.split("-").map(Number);
+    const [yr, mo, da] = selectedDate.split("-").map(Number);
     const now = new Date();
 
-    const slotList = slots
+    const list = slots
       .map((slot) => {
         const [h, m, s] = slot.timeSlot.split(":").map(Number);
-        const slotTime = new Date(year, month - 1, day, h, m, s);
-        return { ...slot, dateObj: slotTime };
+        return {
+          ...slot,
+          dateObj: new Date(yr, mo - 1, da, h, m, s),
+        };
       })
       .sort((a, b) => a.dateObj - b.dateObj);
 
-    return slotList.find((s) => s.dateObj > now) || slotList[0];
+    return list.find((s) => s.dateObj > now) || list[0];
   };
 
   const tickets = useMemo(() => {
     if (!lotteryData) return [];
 
-    const slot = getNearestSlot(
-      lotteryData.availableSlots,
-      lotteryData.selectedDate
-    );
-
-    nearestSlotRef.current = slot; // store for countdown
+    const slot = getNearestSlot(lotteryData.availableSlots, lotteryData.selectedDate);
+    nearestSlotRef.current = slot;
 
     if (!slot) return [];
 
     return slot.availableDenominations.map((d) => ({
-      id: '********',
+      id: "********",
       drawNumber: slot.slotCode,
       price: d.denomination,
       prizeValue: d.prizePool,
@@ -88,7 +78,40 @@ const Home = () => {
     }));
   }, [lotteryData]);
 
-  // Smooth countdown (independent clock)
+  // ----------------- Fetch API -----------------
+  const fetchLottery = async () => {
+    setLoading(true);
+    try {
+      const t = new Date();
+      const yyyy = t.getFullYear();
+      const mm = String(t.getMonth() + 1).padStart(2, "0");
+      const dd = String(t.getDate()).padStart(2, "0");
+
+      const res = await api.get("/gamma/lottery/options", {
+        params: { date: `${yyyy}-${mm}-${dd}` },
+      });
+
+      const data = res.data || res;
+
+      if (data.isDateAvailable) {
+        setLotteryData(data);
+        setError(null);
+      } else {
+        setLotteryData(null);
+        setError("No lottery options available today.");
+      }
+    } catch {
+      setError("Failed to fetch lottery data");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchLottery(); // fetch once on page load
+  }, []);
+
+  // ----------------- Countdown -----------------
   useEffect(() => {
     const interval = setInterval(() => {
       const slot = nearestSlotRef.current;
@@ -103,129 +126,113 @@ const Home = () => {
 
       if (diff <= 0) {
         setCountdown("00:00");
+        fetchLottery(); // fetch again when countdown reaches 0
         return;
       }
 
       const mins = Math.floor(diff / 60000);
       const secs = Math.floor((diff % 60000) / 1000);
-
-      setCountdown(
-        `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`
-      );
+      setCountdown(`${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`);
     }, 1000);
 
     return () => clearInterval(interval);
   }, [lotteryData]);
 
-  // Fetch API every 10 seconds — prevents lag
-  useEffect(() => {
-    const fetchLottery = async () => {
-      try {
-        const today = new Date();
-        const yyyy = today.getFullYear();
-        const mm = String(today.getMonth() + 1).padStart(2, "0");
-        const dd = String(today.getDate()).padStart(2, "0");
-        const dateStr = `${yyyy}-${mm}-${dd}`;
-
-        const res = await api.get("/gamma/lottery/options", {
-          params: { date: dateStr },
-        });
-
-        const data = res.data || res;
-
-        if (data.isDateAvailable) {
-          setLotteryData(data);
-          setError(null);
-        } else {
-          setLotteryData(null);
-          setError("No lottery options available");
-        }
-
-        setLoading(false);
-      } catch (err) {
-        setError("Failed to fetch lottery data");
-        setLoading(false);
-      }
-    };
-
-    fetchLottery();
-    const interval = setInterval(fetchLottery, 10000); // smooth refresh
-    return () => clearInterval(interval);
-  }, []);
-
-  const handleBuyClick = (ticket) => {
-    setSelectedTicket(ticket);
-    setIsModalOpen(true);
-  };
-
-  const handleConfirmPurchase = () => {
-    setPurchasedTickets((p) => [...p, selectedTicket]);
-    alert(`🎟️ Ticket ${selectedTicket.id} purchased for ₹${selectedTicket.price}`);
-    setIsModalOpen(false);
-  };
-
   const nearestSlotName = tickets[0]?.slotName;
 
   return (
-    <div className="bg-white min-h-screen">
-      <img src={poster} className="w-full h-auto mb-4" alt="Poster" />
+    <div
+      className="min-h-screen pb-20"
+      style={{
+        background: "linear-gradient(135deg, #fff7da, #ffe08a)",
+      }}
+    >
+      {/* Poster */}
+      <img
+        src={poster}
+        alt="poster"
+        className="w-full h-auto mb-3"
+        style={{ borderBottom: "3px solid #f46d04" }}
+      />
 
-      <div className="p-3 space-y-2">
-        <section>
-          <h2 className="font-bold text-[14px] mb-2 flex items-center justify-between">
-            <span>
-              DRAW GAMES ({nearestSlotName || (loading ? "Loading..." : "No Slots")})
-            </span>
-            {countdown && (
-              <span className="text-amber-800 text-lg text-nowrap font-semibold ml-2">
-                ⏳ {countdown}
-              </span>
-            )}
-          </h2>
+      {/* Draw Games */}
+      <div>
+        <div
+          className="px-3 py-2 mb-2 flex justify-between items-center"
+          style={{
+            background: "#a20604",
+            color: "#ffed33",
+            border: "2px solid #f46d04",
+            boxShadow: "0 2px 6px rgba(0,0,0,0.3)",
+            borderRadius: "0",
+          }}
+        >
+          <span className="font-bold text-[12px] uppercase tracking-wide">
+            DRAW GAMES {nearestSlotName ? `(${nearestSlotName})` : ""}
+          </span>
 
-          <div className="flex space-x-3 overflow-x-auto p-4 pt-1 -mx-3">
-            {tickets.map((ticket) => (
-              <LotteryTicket
-                key={ticket.id}
-                {...ticket}
-                canPurchase={true}
-                loading={loading}
-                onBuyClick={() => handleBuyClick(ticket)}
-              />
-            ))}
-            {!loading && tickets.length === 0 && <div>No tickets available</div>}
-          </div>
-        </section>
+          {countdown && <span className="font-bold text-md">⏳ {countdown}</span>}
+        </div>
 
+        <div className="flex space-x-3 overflow-x-auto p-3">
+          {tickets.map((t) => (
+            <LotteryTicket
+              key={t.id}
+              {...t}
+              loading={loading}
+              canPurchase={true}
+              onBuyClick={() => {
+                setSelectedTicket(t);
+                setIsModalOpen(true);
+              }}
+            />
+          ))}
 
-        <section>
-          <h2 className="font-bold text-[14px] mb-2">SCRATCH CARDS</h2>
-          <div className="flex space-x-4 overflow-x-auto pb-4">
-            {scratchTicketsData.map((t, i) => (
-              <ScratchTicketCard key={i} {...t} />
-            ))}
-          </div>
-        </section>
+          {!loading && tickets.length === 0 && (
+            <div className="text-red-700">No tickets available</div>
+          )}
+        </div>
       </div>
 
+      {/* Scratch Cards */}
+      <div className="mt-4">
+        <div
+          className="px-3 py-2 mb-2"
+          style={{
+            background: "#a20604",
+            color: "#ffed33",
+            border: "2px solid #f46d04",
+            borderRadius: "0",
+            boxShadow: "0 2px 6px rgba(0,0,0,0.3)",
+          }}
+        >
+          <h2 className="font-bold text-[12px] uppercase">Scratch Cards</h2>
+        </div>
+
+        <div className="flex space-x-4 overflow-x-auto pb-4">
+          {scratchTicketsData.map((sc, i) => (
+            <ScratchTicketCard key={i} {...sc} />
+          ))}
+        </div>
+      </div>
+
+      {/* Buy Ticket Modal */}
       {isModalOpen && selectedTicket && (
         <BuyTicketModal
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
           price={selectedTicket.price}
           ticket={selectedTicket}
-          onConfirm={handleConfirmPurchase}
           purchasedTickets={purchasedTickets}
           apiData={lotteryData}
         />
       )}
 
-      {error && <div className="text-red-500 p-3">{error}</div>}
-     {/* Floating Result Button */}
-<FloatingResultButton onClick={() => setIsResultOpen(true)} />
+      {error && <div className="text-red-600 px-4 py-2">{error}</div>}
 
-{/* Result Modal */}
-<ResultModal isOpen={isResultOpen} onClose={() => setIsResultOpen(false)} />    </div>
+      <FloatingResultButton onClick={() => setIsResultOpen(true)} />
+      <ResultModal isOpen={isResultOpen} onClose={() => setIsResultOpen(false)} />
+    </div>
   );
 };
 

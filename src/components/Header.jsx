@@ -40,7 +40,7 @@ const Header = ({ onToggleSidebar }) => {
   return (
     <header
       style={{ background: "var(--bg-gradient)" }}
-      className="fixed flex items-center justify-between w-full h-13 px-2 text-white z-50"
+      className="fixed flex items-center justify-between w-full max-w-md mx-auto h-13 px-2 text-white z-50"
     >
       <button
         onClick={onToggleSidebar}

@@ -8,7 +8,7 @@ const FloatingResultButton = ({ onClick }) => {
         fixed !important
         right-4 !important
         bottom-24 !important
-        z-50 !important
+        z-40 !important
       "
       style={{ pointerEvents: "auto" }}
     >
